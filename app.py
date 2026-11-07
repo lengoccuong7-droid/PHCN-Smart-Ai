@@ -268,7 +268,7 @@ if app_mode == "1. Khám bệnh & Lý luận lâm sàng":
             }
             history_mgr.save_visit(patient_phone, exam_data)
             st.success(f"✅ Đã lưu thành công hồ sơ bệnh án cho bệnh nhân **{patient_name}** vào hệ # MỤC 2: THƯ VIỆN CHI TIẾT BÀI TẬP PHCN (8 NHÓM - 7 BÀI TẬP CÓ MÔ TẢ ĐẦY ĐỦ)
-# ------------------------------------------
+# MỤC 2: THƯ VIỆN CHI TIẾT BÀI TẬP PHCN (8 NHÓM - 7 BÀI TẬP CÓ MÔ TẢ ĐẦY 
 else:
     st.subheader("🏋️‍♂️ Thư viện Chi tiết Bài Tập Phục Hồi Chức Năng Chuyên Sâu")
     st.markdown("Chọn chương trình PHCN dưới đây để xem **hướng dẫn thao tác, tư thế và liều lượng chi tiết** cho từng bài tập chuẩn y khoa:")
