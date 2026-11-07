@@ -1,43 +1,43 @@
 # Core/history_manager.py
 import os
 import json
-from datetime import datetime
 
 class HistoryManager:
     def __init__(self, history_file="patient_history.json"):
-        self.history_file = history_file
+        # Đảm bảo tệp lưu trữ lịch sử luôn nằm ở thư mục gốc để tránh lỗi đường dẫn
+        self.history_file = os.path.abspath(history_file)
         self.ensure_file()
 
     def ensure_file(self):
         """Đảm bảo tệp lưu trữ lịch sử luôn tồn tại ở thư mục gốc."""
         if not os.path.exists(self.history_file):
             with open(self.history_file, "w", encoding="utf-8") as f:
-                json.dump({}, f, ensure_ascii=False, indent=4)
+                json.dump([], f, ensure_ascii=False, indent=4)
 
     def get_patient_history(self, phone):
-        """Lấy toàn bộ lịch sử khám của bệnh nhân theo số điện thoại."""
-        self.ensure_file()
+        """Lấy lịch sử khám của bệnh nhân dựa theo số điện thoại."""
+        if not phone:
+            return []
         try:
             with open(self.history_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get(phone, [])
+                history = json.load(f)
+            # Lọc các lần khám theo số điện thoại
+            patient_visits = [v for v in history if v.get("patient_phone") == phone]
+            return patient_visits
         except Exception:
             return []
 
     def save_visit(self, phone, visit_data):
-        """Lưu ca khám mới vào lịch sử tái khám của bệnh nhân."""
-        self.ensure_file()
+        """Lưu một lượt khám mới vào tệp JSON hệ thống."""
         try:
             with open(self.history_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
+                history = json.load(f)
         except Exception:
-            data = {}
+            history = []
 
-        if phone not in data:
-            data[phone] = []
-
-        visit_data["date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        data[phone].append(visit_data)
+        import datetime
+        visit_data["date"] = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+        history.append(visit_data)
 
         with open(self.history_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+            json.dump(history, f, ensure_ascii=False, indent=4)
