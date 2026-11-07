@@ -97,9 +97,7 @@ if app_mode == "1. Khám bệnh & Lý luận lâm sàng":
     st.markdown("### 🩺 PHCN AI 1.8")
     st.caption("Trợ lý lâm sàng Phục hồi chức năng & Vật lý trị liệu")
 
-    # ------------------------------------------
     # 1. NHẬP LIỆU THĂM KHÁM
-    # ------------------------------------------
     with st.expander("📋 1. Nhập liệu thăm khám", expanded=True):
         st.markdown("#### 👤 Thông tin bệnh nhân")
         col_h1, col_h2 = st.columns(2)
@@ -204,22 +202,18 @@ if app_mode == "1. Khám bệnh & Lý luận lâm sàng":
             rf_3 = st.checkbox("Sốt cao / Viêm nhiễm", key="rf_3")
             rf_4 = st.checkbox("Yếu liệt chi tiến triển nhanh", key="rf_4")
 
-        # Mục Tệp đính kèm (Ảnh chụp X-quang, MRI, tài liệu)
+        # Mục Tệp đính kèm
         with st.expander("📁 Tệp đính kèm (Hình ảnh X-quang, MRI, tài liệu)"):
             uploaded_files = st.file_uploader("Tải lên hình ảnh hoặc tài liệu liên quan:", accept_multiple_files=True, type=["jpg", "png", "jpeg", "pdf"], key="file_upload_sec")
             if uploaded_files:
                 st.success(f"Đã đính kèm {len(uploaded_files)} tệp tin vào hồ sơ.")
 
-    # ------------------------------------------
     # 2. CƠ SỞ TRI THỨC
-    # ------------------------------------------
     with st.expander("📚 2. Cơ sở tri thức & Danh mục bệnh lý", expanded=False):
         search_kw = st.text_input("🔍 Tìm kiếm kiến thức / Bệnh lý:", placeholder="Nhập tên bệnh hoặc triệu chứng...")
         st.info("💡 Tra cứu nhanh các bệnh lý cột sống, khớp gối, khớp vai trực tiếp từ hệ thống tri thức chuẩn hóa.")
 
-    # ------------------------------------------
-    # 3. PHÂN TÍCH CHẨN ĐOÁN & TỔNG HỢP BỆNH ÁN (CÓ BẢNG ĐỂ BS ĐỌC LẠI)
-    # ------------------------------------------
+    # 3. PHÂN TÍCH CHẨN ĐOÁN & TỔNG HỢP BỆNH ÁN
     st.markdown("### 🧠 3. Tổng hợp Bệnh án & Phân tích AI")
     
     summary_data = {
@@ -267,11 +261,14 @@ if app_mode == "1. Khám bệnh & Lý luận lâm sàng":
                 "summary": exam_summary
             }
             history_mgr.save_visit(patient_phone, exam_data)
-            st.success(f"✅ Đã lưu thành công hồ sơ bệnh án cho bệnh nhân **{patient_name}** vào hệ 
-# MỤC 2: THƯ VIỆN CHI TIẾT BÀI TẬP PHCN (8 NHÓM - 7 BÀI TẬP CÓ MÔ TẢ ĐẦY 
+            st.success(f"✅ Đã lưu thành công hồ sơ bệnh án cho bệnh nhân **{patient_name}** vào hệ thống!")
+
+# ------------------------------------------
+# MỤC 2: THƯ VIỆN CHI TIẾT BÀI TẬP PHCN (ĐẦY ĐỦ 8 NHÓM - 7 BÀI TẬP)
+# ------------------------------------------
 else:
     st.subheader("🏋️‍♂️ Thư viện Chi tiết Bài Tập Phục Hồi Chức Năng Chuyên Sâu")
-    st.markdown("Chọn chương trình PHCN dưới đây để xem **hướng dẫn thao tác, tư thế và liều lượng chi tiết** cho từng bài tập chuẩn y khoa:")
+    st.markdown("Chọn chương trình PHCN dưới đây để xem **hướng dẫn thao tác, tư thế và liều lượng chi tiết**:")
 
     rehab_program = st.selectbox("🎯 Chọn chương trình Phục hồi chức năng:", [
         "1. PHCN sau tai biến mạch máu não (Liệt nửa người)",
@@ -289,7 +286,6 @@ else:
     if "1." in rehab_program:
         st.subheader("🧠 1. Chương trình PHCN sau tai biến mạch máu não")
         st.write("• **Mục tiêu:** Phòng ngừa co cứng, kích hoạt lại vận động bên liệt và phục hồi thăng bằng.")
-        
         st.markdown("---")
         st.markdown("##### 1. Vận động thụ động - chủ động hỗ trợ khớp vai và khuỷu tay bên liệt")
         st.write("- **Tư thế:** Bệnh nhân nằm ngửa hoặc ngồi ghế tựa.")
@@ -329,7 +325,6 @@ else:
     elif "2." in rehab_program:
         st.subheader("🦴 2. Chương trình PHCN cong vẹo cột sống cổ / Cổ vai gáy")
         st.write("• **Mục tiêu:** Thư giãn nhóm cơ co thắt, mạnh cơ cổ sâu, chỉnh sửa tư thế đầu.")
-        
         st.markdown("---")
         st.markdown("##### 1. Kéo giãn cơ thang trên (Upper Trapezius Stretch)")
         st.write("- **Tư thế:** Ngồi thẳng, một tay ôm vòng qua đầu kéo nghiêng đầu về phía đối diện.")
@@ -369,7 +364,6 @@ else:
     elif "3." in rehab_program:
         st.subheader("🧸 3. Chương trình PHCN cho trẻ bại não (Cerebral Palsy)")
         st.write("• **Mục tiêu:** Ức chế phản xạ nguyên bản bất thường, tăng cường kiểm soát đầu cổ.")
-        
         st.markdown("---")
         st.markdown("##### 1. Tạo thuận kiểm soát đầu cổ")
         st.write("- **Tư thế:** Trẻ nằm sấp trên thảm có cuộn khăn dưới ngực.")
@@ -409,7 +403,6 @@ else:
     elif "4." in rehab_program:
         st.subheader("🦵 4. Chương trình PHCN sau mổ tái tạo dây chằng chéo trước (ACL)")
         st.write("• **Mục tiêu:** Lấy lại biên độ duỗi thẳng hoàn toàn, phục hồi cơ tứ đầu đùi.")
-        
         st.markdown("---")
         st.markdown("##### 1. Duỗi gối thụ động tối đa")
         st.write("- **Tư thế:** Nằm ngửa, gót chân kê cao trên con lăn, để chân tự duỗi thẳng hoàn toàn dưới trọng lực.")
@@ -448,7 +441,6 @@ else:
     elif "5." in rehab_program:
         st.subheader("🦴 5. Chương trình PHCN sau mổ kết hợp xương gãy thân xương đùi")
         st.write("• **Mục tiêu:** Ngăn ngừa teo cơ, chống huyết khối tĩnh mạch, hồi phục chức năng gối.")
-        
         st.markdown("---")
         st.markdown("##### 1. Bơm máu cổ chân")
         st.write("- **Tư thế:** Nằm ngửa, chân duỗi thẳng.")
@@ -486,7 +478,6 @@ else:
     elif "6." in rehab_program:
         st.subheader("✋ 6. Chương trình PHCN sau mổ gãy xương cổ tay / bàn tay")
         st.write("• **Mục tiêu:** Chống phù nề, chống xơ hóa gân, lấy lại tầm vận động và lực nắm.")
-        
         st.markdown("---")
         st.markdown("##### 1. Kê cao tay & nắm xòe ngón tay")
         st.write("- **Tư thế:** Ngồi hoặc nằm, tay bị thương kê cao hơn mức tim.")
@@ -526,7 +517,6 @@ else:
     elif "7." in rehab_program:
         st.subheader("🦴 7. Chương trình PHCN sau phẫu thuật thay khớp háng toàn phần")
         st.write("• **Mục tiêu:** Bảo vệ khớp nhân tạo, phục hồi cơ mông, hướng dẫn sinh hoạt an toàn.")
-        
         st.markdown("---")
         st.markdown("##### 1. Bơm máu bàn chân")
         st.write("- **Tư thế:** Nằm ngửa, hai chân duỗi thẳng.")
@@ -562,9 +552,8 @@ else:
         st.write("- **Lưu ý:** Không bắt chéo chân khi nằm hoặc ngồi, không cúi gập người quá 90 độ, luôn dùng ghế cao khi ngồi vệ sinh.")
 
     elif "8." in rehab_program:
-        st.subheader("🗣️ 8. Chương trình PHCN cho trẻ chậm nói / Rối loạn ngôn ngữ")
+        st.subheader("🗣️ 8. Chương trình PHCN cho trẻ chậm nói / Rối loạn phát triển ngôn ngữ")
         st.write("• **Mục tiêu:** Kích thích cơ quan phát âm, mở rộng vốn từ vựng tiếp nhận.")
-        
         st.markdown("---")
         st.markdown("##### 1. Massage kích thích cơ vùng miệng - môi - má")
         st.write("- **Tư thế:** Trẻ ngồi thoải mái trước mặt kỹ thuật viên hoặc phụ huynh.")
