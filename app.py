@@ -54,32 +54,7 @@ class SimpleHistoryManager:
         except Exception:
             pass
 
-# Khởi tạo quản lý lịch sử và tri thức cơ bản
 history_mgr = SimpleHistoryManager()
-
-def get_comprehensive_kb():
-    return {
-        "Cột sống cổ": {
-            "Hội chứng cổ vai gáy": {
-                "symptoms": ["Đau mỏi vùng cổ gáy lan bả vai", "Cơ thang co thắt cứng"],
-                "special_tests": ["Spurling test", "Compression test"]
-            }
-        },
-        "Cột sống thắt lưng": {
-            "Thoát vị đĩa đệm L4-L5": {
-                "symptoms": ["Đau thắt lưng lan xuống mông và chân (đau thần kinh tọa)", "Tê bì mu chân"],
-                "special_tests": ["Lasegue test", "Bragard test"]
-            }
-        },
-        "Khớp gối": {
-            "Tổn thương sụn chêm": {
-                "symptoms": ["Đau khe khớp gối", "Hiện tượng kẹt khớp khi xoay gối"],
-                "special_tests": ["McMurray test", "Apley test"]
-            }
-        }
-    }
-
-kb = get_comprehensive_kb()
 
 # Thanh điều hướng chuyển đổi chế độ
 app_mode = st.sidebar.radio(
@@ -99,21 +74,21 @@ if app_mode == "1. Khám bệnh & Lý luận lâm sàng":
 
     # 1. NHẬP LIỆU THĂM KHÁM
     with st.expander("📋 1. Nhập liệu thăm khám", expanded=True):
-        st.markdown("#### 👤 Thông tin bệnh nhân")
+        st.markdown("#### 👤 Thông tin hành chính bệnh nhân")
         col_h1, col_h2 = st.columns(2)
         with col_h1:
-            patient_name = st.text_input("Họ tên:", value="Nguyễn Văn A", key="input_name")
-            patient_job = st.text_input("Nghề nghiệp:", value="Nhân viên văn phòng", key="input_job")
+            patient_name = st.text_input("Họ tên bệnh nhân:", value="", placeholder="Nhập họ và tên...", key="input_name")
+            patient_job = st.text_input("Nghề nghiệp:", value="", placeholder="Nhập nghề nghiệp...", key="input_job")
         with col_h2:
-            patient_phone = st.text_input("Số điện thoại / Mã BN:", value="0901234567", key="input_phone")
+            patient_phone = st.text_input("Số điện thoại / Mã BN:", value="", placeholder="Nhập số điện thoại...", key="input_phone")
             patient_age = st.number_input("Năm sinh:", min_value=1900, max_value=2026, value=1990, key="input_age")
 
         # Nút xem hồ sơ cũ của bệnh nhân
-        if st.button("👁️ Xem hồ sơ bệnh nhân từ hệ thống", key="btn_view_profile"):
+        if st.button("👁️ Xem lịch sử hồ sơ bệnh nhân", key="btn_view_profile"):
             if patient_phone:
                 past_visits = history_mgr.get_patient_history(patient_phone)
                 if past_visits:
-                    st.info(f"📁 Tìm thấy {len(past_visits)} lần khám trước đây của bệnh nhân này.")
+                    st.info(f"📁 Tìm thấy {len(past_visits)} lần khám trước đây của SĐT: {patient_phone}")
                     for idx, visit in enumerate(past_visits):
                         st.write(f"• **Lần {idx+1} ({visit.get('date', 'N/A')}):** {visit.get('summary', 'Không có dữ liệu')}")
                 else:
@@ -121,79 +96,45 @@ if app_mode == "1. Khám bệnh & Lý luận lâm sàng":
             else:
                 st.warning("⚠️ Vui lòng nhập số điện thoại để tra cứu hồ sơ.")
 
-        # Thêm mục tra cứu lịch sử nhanh
-        with st.expander("📁 Lịch sử ca khám đã lưu trong hệ thống"):
-            search_phone_input = st.text_input("Nhập SĐT để tra cứu nhanh:", placeholder="Ví dụ: 0901234567", key="search_history_phone")
+        # Lịch sử hệ thống
+        with st.expander("📁 Tra cứu nhanh cơ sở dữ liệu lịch sử"):
+            search_phone_input = st.text_input("Nhập SĐT tra cứu:", placeholder="Ví dụ: 0901234567", key="search_history_phone")
             if search_phone_input:
                 patient_history_list = history_mgr.get_patient_history(search_phone_input)
                 if patient_history_list:
-                    st.success(f"Tìm thấy {len(patient_history_list)} lần khám của SĐT: {search_phone_input}")
+                    st.success(f"Tìm thấy {len(patient_history_list)} lần khám.")
                     for idx, visit in enumerate(patient_history_list):
                         st.markdown(f"**Lần {idx+1} – Thời gian: {visit.get('date', 'N/A')}**")
                         st.write(f"• **Họ tên:** {visit.get('patient_name', 'N/A')}")
-                        st.write(f"• **Tóm tắt khám:** {visit.get('summary', 'Không có dữ liệu')}")
+                        st.write(f"• **Tóm tắt:** {visit.get('summary', 'N/A')}")
                         st.markdown("---")
                 else:
-                    st.warning("⚠️ Không tìm thấy lịch sử khám nào với số điện thoại này.")
-            
-            st.markdown("##### 📋 Danh sách các ca khám gần đây")
-            try:
-                if os.path.exists(history_mgr.history_file):
-                    with open(history_mgr.history_file, "r", encoding="utf-8") as f:
-                        all_history = json.load(f)
-                    if all_history:
-                        recent_visits = all_history[-5:]
-                        recent_visits.reverse()
-                        for v in recent_visits:
-                            st.text(f"[{v.get('date', 'N/A')}] BN: {v.get('patient_name', 'N/A')} (SĐT: {v.get('patient_phone', 'N/A')})")
-                    else:
-                        st.info("Chưa có ca khám nào được lưu.")
-                else:
-                    st.info("Chưa có tệp dữ liệu lịch sử.")
-            except Exception:
-                st.info("Đang khởi tạo dữ liệu lịch sử...")
+                    st.warning("⚠️ Không tìm thấy lịch sử.")
 
         st.markdown("---")
-        ly_do_vao_vien = st.text_input("🏥 Lý do vào viện:", placeholder="Nhập lý do vào viện...", key="input_ly_do")
+        ly_do_vao_vien = st.text_input("🏥 Lý do vào viện:", value="", placeholder="Nhập lý do vào viện...", key="input_ly_do")
 
-        # Bệnh sử SOCRATES chi tiết từng ô
+        # Bệnh sử SOCRATES
         with st.expander("🩺 Bệnh sử SOCRATES (Chi tiết)"):
-            site = st.text_input("S – Vị trí:", placeholder="Nhập vị trí đau...", key="soc_site")
-            onset = st.text_input("O – Khởi phát + thời điểm:", placeholder="Nhập hoàn cảnh khởi phát và thời điểm...", key="soc_onset")
-            character = st.text_input("C – Tính chất:", placeholder="Nhói, âm ỉ, tê bì, buốt...", key="soc_char")
-            radiation = st.text_input("R – Hướng lan:", placeholder="Có lan đi đâu không...", key="soc_rad")
-            associations = st.text_input("A – Triệu chứng đi kèm:", placeholder="Yếu cơ, sưng nề, cứng khớp...", key="soc_assoc")
-            time_course = st.text_input("T – Diễn tiến:", placeholder="Liên tục, từng cơn, tăng về đêm...", key="soc_time")
-            exacerbating = st.text_input("E – Tăng/giảm đau:", placeholder="Tư thế/hoạt động nào làm tăng hoặc giảm đau...", key="soc_exac")
+            site = st.text_input("S – Vị trí đau:", placeholder="Vị trí...", key="soc_site")
+            onset = st.text_input("O – Khởi phát:", placeholder="Hoàn cảnh khởi phát...", key="soc_onset")
+            character = st.text_input("C – Tính chất đau:", placeholder="Nhói, âm ỉ, tê bì...", key="soc_char")
+            radiation = st.text_input("R – Hướng lan:", placeholder="Lan đi đâu...", key="soc_rad")
+            associations = st.text_input("A – Triệu chứng kèm:", placeholder="Yếu cơ, sưng nề...", key="soc_assoc")
+            time_course = st.text_input("T – Diễn tiến:", placeholder="Tăng về đêm, liên tục...", key="soc_time")
+            exacerbating = st.text_input("E – Yếu tố tăng/giảm:", placeholder="Tư thế nào đau hơn...", key="soc_exac")
             
             col_nrs1, col_nrs2 = st.columns([1, 2])
             with col_nrs1:
-                nrs_score = st.selectbox("Điểm NRS:", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], key="soc_nrs_val")
+                nrs_score = st.selectbox("Mức độ đau (NRS):", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], key="soc_nrs_val")
             with col_nrs2:
-                nrs_note = st.text_input("Ghi chú mức độ đau:", placeholder="Mô tả thêm mức độ ảnh hưởng...", key="soc_nrs_note")
+                nrs_note = st.text_input("Ghi chú NRS:", placeholder="Đánh giá thêm...", key="soc_nrs_note")
 
-        # Khám thực thể & Bài Test
-        with st.expander("🔍 Khám thực thể & Bài Test đặc hiệu"):
-            region = st.selectbox("Chọn vùng khám:", list(kb.keys()), key="select_region")
-            
-            selected_tests = []
-            pathology = ""
-            if region:
-                specific_pathologies = list(kb[region].keys())
-                pathology = st.selectbox("Chọn bệnh lý nghi ngờ:", specific_pathologies, key="select_pathology")
-                
-                if pathology:
-                    pathology_data = kb[region][pathology]
-                    st.markdown(f"**📌 Triệu chứng đặc trưng:**")
-                    for sym in pathology_data.get("symptoms", []):
-                        st.write(f"• {sym}")
-                        
-                    st.markdown(f"**🧪 Bài Test đặc hiệu:**")
-                    for test in pathology_data.get("special_tests", []):
-                        if st.checkbox(f"Thực hiện: {test}", key=f"test_{test}"):
-                            selected_tests.append(test)
-
-            ghi_chu_kham = st.text_area("✍️ Ghi chú khám thực thể:", placeholder="Nhập kết quả khám thực thể khác...", key="input_ghi_chu_kham")
+        # Khám thực thể & Chẩn đoán linh hoạt (Không gò ép cứng nhắc)
+        with st.expander("🔍 Khám thực thể & Chẩn đoán lâm sàng"):
+            vung_kham = st.text_input("📍 Vùng thăm khám:", placeholder="Ví dụ: Cột sống thắt lưng, Khớp vai...", key="input_vung_kham")
+            chan_doan_so_bo = st.text_input("🩺 Chẩn đoán sơ bộ / Nghi ngờ:", placeholder="Nhập chẩn đoán lâm sàng...", key="input_chan_doan")
+            ghi_chu_kham = st.text_area("✍️ Kết quả khám thực thể & Test đặc hiệu:", placeholder="Ghi nhận tầm vận động, điểm đau, kết quả test dương tính...", key="input_ghi_chu_kham")
 
         # Cờ đỏ an toàn
         with st.expander("🚩 Cờ đỏ an toàn (Red Flags)"):
@@ -202,46 +143,62 @@ if app_mode == "1. Khám bệnh & Lý luận lâm sàng":
             rf_3 = st.checkbox("Sốt cao / Viêm nhiễm", key="rf_3")
             rf_4 = st.checkbox("Yếu liệt chi tiến triển nhanh", key="rf_4")
 
-        # Mục Tệp đính kèm
-        with st.expander("📁 Tệp đính kèm (Hình ảnh X-quang, MRI, tài liệu)"):
-            uploaded_files = st.file_uploader("Tải lên hình ảnh hoặc tài liệu liên quan:", accept_multiple_files=True, type=["jpg", "png", "jpeg", "pdf"], key="file_upload_sec")
+        # Tệp đính kèm
+        with st.expander("📁 Tệp đính kèm (X-quang, MRI, tài liệu)"):
+            uploaded_files = st.file_uploader("Tải lên hình ảnh hoặc tài liệu:", accept_multiple_files=True, type=["jpg", "png", "jpeg", "pdf"], key="file_upload_sec")
             if uploaded_files:
-                st.success(f"Đã đính kèm {len(uploaded_files)} tệp tin vào hồ sơ.")
+                st.success(f"Đã đính kèm {len(uploaded_files)} tệp tin.")
 
-    # 2. CƠ SỞ TRI THỨC
-    with st.expander("📚 2. Cơ sở tri thức & Danh mục bệnh lý", expanded=False):
-        search_kw = st.text_input("🔍 Tìm kiếm kiến thức / Bệnh lý:", placeholder="Nhập tên bệnh hoặc triệu chứng...")
-        st.info("💡 Tra cứu nhanh các bệnh lý cột sống, khớp gối, khớp vai trực tiếp từ hệ thống tri thức chuẩn hóa.")
-
-    # 3. PHÂN TÍCH CHẨN ĐOÁN & TỔNG HỢP BỆNH ÁN
-    st.markdown("### 🧠 3. Tổng hợp Bệnh án & Phân tích AI")
+    # ------------------------------------------
+    # 2. TỔNG HỢP BỆNH ÁN (CHUẨN FORM TỜ A4 ĐỂ XEM/IN)
+    # ------------------------------------------
+    st.markdown("### 📄 2. Tóm tắt Bệnh án Lâm sàng (Mẫu in A4)")
     
-    summary_data = {
-        "Họ và tên": [patient_name],
-        "Tuổi/Năm sinh": [str(patient_age)],
-        "Số điện thoại": [patient_phone],
-        "Nghề nghiệp": [patient_job],
-        "Lý do vào viện": [ly_do_vao_vien if 'ly_do_vao_vien' in locals() else ""],
-        "Bệnh sử SOCRATES": [f"Site:{site if 'site' in locals() else ''} | Onset:{onset if 'onset' in locals() else ''} | Char:{character if 'character' in locals() else ''} | NRS:{nrs_score if 'nrs_score' in locals() else 0}/10"],
-        "Vùng khám & Bệnh lý": [f"{region if 'region' in locals() else ''} - {pathology if 'pathology' in locals() else ''}"],
-        "Test dương tính": [f"{len(selected_tests) if 'selected_tests' in locals() else 0} bài test"],
-        "Cờ đỏ (Red Flags)": [", ".join([k for k, v in [("Hội chứng đuôi ngựa", rf_1), ("Sụt cân/Ác tính", rf_2), ("Sốt cao/Viêm", rf_3), ("Yếu liệt nhanh", rf_4)] if v]) or "Không ghi nhận"]
-    }
+    # Tạo khung giao diện định dạng giống tờ giấy A4 sạch sẽ, chuyên nghiệp
+    a4_container = st.container()
+    with a4_container:
+        st.markdown(
+            """
+            <div style="border: 2px solid #ccc; padding: 25px; border-radius: 10px; background-color: #fafafa; color: #333; font-family: Arial, sans-serif;">
+                <h3 style="text-align: center; color: #1f77b4; margin-bottom: 5px;">PHIẾU KHÁM & TÓM TẮT LÂM SÀNG PHCN</h3>
+                <p style="text-align: center; font-size: 13px; color: #666;">PHCN AI 1.8 - Trợ lý lâm sàng chuyên sâu</p>
+                <hr style="border: 1px solid #ddd;">
+            """, 
+            unsafe_allow_html=True
+        )
+        
+        col_p1, col_p2 = st.columns(2)
+        with col_p1:
+            st.markdown(f"**Họ và tên BN:** {patient_name if patient_name else '---'}")
+            st.markdown(f"**Năm sinh:** {patient_age}")
+            st.markdown(f"**Nghề nghiệp:** {patient_job if patient_job else '---'}")
+        with col_p2:
+            st.markdown(f"**Số điện thoại:** {patient_phone if patient_phone else '---'}")
+            st.markdown(f"**Ngày khám:** {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}")
+            st.markdown(f"**Lý do vào viện:** {ly_do_vao_vien if ly_do_vao_vien else '---'}")
 
-    df_summary = pd.DataFrame(summary_data).T
-    df_summary.columns = ["Thông tin ghi nhận"]
+        st.markdown("---")
+        st.markdown(f"**1. Bệnh sử (SOCRATES):** Vị trí: `{site}` | Khởi phát: `{onset}` | Tính chất: `{character}` | Hướng lan: `{radiation}` | Mức độ đau (NRS): `{nrs_score}/10`")
+        st.markdown(f"**2. Vùng thăm khám:** {vung_kham if vung_kham else 'Chưa cập nhật'}")
+        st.markdown(f"**3. Chẩn đoán sơ bộ:** {chan_doan_so_bo if chan_doan_so_bo else 'Chưa cập nhật'}")
+        st.markdown(f"**4. Ghi chú khám thực thể:** {ghi_chu_kham if ghi_chu_kham else 'Không có ghi chú thêm'}")
+        
+        active_flags = [k for k, v in [("Hội chứng đuôi ngựa", rf_1), ("Sụt cân/Ác tính", rf_2), ("Sốt cao/Viêm", rf_3), ("Yếu liệt nhanh", rf_4)] if v]
+        st.markdown(f"**5. Cờ đỏ (Red Flags):** {', '.join(active_flags) if active_flags else 'Không ghi nhận dấu hiệu bất thường'}")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("##### 📋 Bảng tổng hợp chi tiết ca bệnh (Xem trước):")
-    st.dataframe(df_summary, use_container_width=True)
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    if st.button("🚀 Chạy phân tích AI & Đề xuất phác đồ", type="primary", use_container_width=True):
-        st.success(f"✅ Đã phân tích xong ca bệnh cho **{patient_name}**. Hệ thống đã sẵn sàng xuất phác đồ tập vật lý trị liệu.")
+    # Nút chức năng
+    if st.button("🚀 Kích hoạt Phân tích AI & Đề xuất Phác đồ", type="primary", use_container_width=True):
+        st.success(f"✅ Đã xử lý phân tích lâm sàng cho bệnh nhân: **{patient_name if patient_name else 'Bệnh nhân'}**.")
 
     col_btn1, col_btn2, col_btn3 = st.columns(3)
     with col_btn1:
-        text_to_copy = f"BỆNH ÁN PHCN\nHọ tên: {patient_name} ({patient_age})\nSĐT: {patient_phone}\nLý do: {ly_do_vao_vien}\nSOCRATES: {summary_data['Bệnh sử SOCRATES'][0]}\nChẩn đoán: {summary_data['Vùng khám & Bệnh lý'][0]}"
+        text_to_copy = f"PHIẾU KHÁM PHCN\nHọ tên: {patient_name} ({patient_age})\nSĐT: {patient_phone}\nLý do: {ly_do_vao_vien}\nChẩn đoán: {chan_doan_so_bo}\nNRS: {nrs_score}/10"
         st.code(text_to_copy, language="text")
-        st.caption("👆 Nhấn nút copy ở góc trên khung để sao chép.")
+        st.caption("👆 Sao chép nhanh nội dung tóm tắt.")
     with col_btn2:
         if st.button("🟢 ChatGPT", use_container_width=True):
             st.info("Chuyển hướng dữ liệu sang ChatGPT.")
@@ -252,18 +209,19 @@ if app_mode == "1. Khám bệnh & Lý luận lâm sàng":
     st.markdown("---")
     if st.button("💾 Lưu hồ sơ bệnh án vào hệ thống", type="primary", use_container_width=True):
         if not patient_name or not patient_phone:
-            st.warning("⚠️ Vui lòng điền đầy đủ Họ tên và SĐT bệnh nhân!")
+            st.warning("⚠️ Vui lòng điền đầy đủ Họ tên và SĐT để lưu trữ!")
         else:
-            exam_summary = f"Vùng: {region if 'region' in locals() else ''} | Bệnh lý: {pathology if 'pathology' in locals() else ''}"
+            exam_summary = f"Chẩn đoán: {chan_doan_so_bo if chan_doan_so_bo else 'Khám lâm sàng'} | NRS: {nrs_score}/10"
             exam_data = {
                 "patient_name": patient_name,
                 "patient_phone": patient_phone,
                 "summary": exam_summary
             }
             history_mgr.save_visit(patient_phone, exam_data)
-            st.success(f"✅ Đã lưu thành công hồ sơ bệnh án cho bệnh nhân **{patient_name}** vào hệ thống!")
+            st.success(f"✅ Đã lưu hồ sơ thành công cho bệnh nhân **{patient_name}** vào hệ thống lịch sử!")
 
 # ------------------------------------------
+
 # MỤC 2: THƯ VIỆN CHI TIẾT BÀI TẬP PHCN (ĐẦY ĐỦ 8 NHÓM - 7 BÀI TẬP)
 # ------------------------------------------
 else:
