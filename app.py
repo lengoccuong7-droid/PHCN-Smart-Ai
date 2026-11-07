@@ -1,5 +1,5 @@
 import streamlit as st
-from core.engine import SuperClinicalEngine
+from Core.engine import SuperClinicalEngine
 from app_helpers import apply_custom_css
 
 st.set_page_config(page_title="Phục Hồi Chức Năng Và Vật Lý Trị Liệu AI", layout="wide")
