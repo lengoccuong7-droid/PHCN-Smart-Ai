@@ -1,6 +1,6 @@
 import re
 import json
-from core.kb_builder import get_comprehensive_kb
+from Core.kb_builder import get_comprehensive_kb
 
 class SuperClinicalEngine:
     def __init__(self):
