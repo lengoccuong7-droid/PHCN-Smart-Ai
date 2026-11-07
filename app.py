@@ -1,8 +1,9 @@
 # app.py
 import streamlit as st
-from Core.engine import SuperClinicalEngine
-from Core.history_manager import HistoryManager
-from Core.kb_builder import get_comprehensive_kb
+import os
+import json
+import datetime
+import pandas as pd
 
 # Cấu hình giao diện tối ưu cho mobile
 st.set_page_config(
@@ -11,9 +12,73 @@ st.set_page_config(
     layout="centered"
 )
 
-# Khởi tạo engine và quản lý lịch sử
-engine = SuperClinicalEngine()
-history_mgr = HistoryManager()
+# --- QUẢN LÝ LỊCH SỬ KHÁM TRỰC TIẾP TẠI GỐC ---
+class SimpleHistoryManager:
+    def __init__(self, history_file="patient_history.json"):
+        self.history_file = os.path.abspath(history_file)
+        if not os.path.exists(self.history_file):
+            try:
+                with open(self.history_file, "w", encoding="utf-8") as f:
+                    json.dump([], f, ensure_ascii=False, indent=4)
+            except Exception:
+                pass
+
+    def get_patient_history(self, phone):
+        if not phone:
+            return []
+        try:
+            if not os.path.exists(self.history_file):
+                return []
+            with open(self.history_file, "r", encoding="utf-8") as f:
+                history = json.load(f)
+            return [v for v in history if v.get("patient_phone") == phone]
+        except Exception:
+            return []
+
+    def save_visit(self, phone, visit_data):
+        try:
+            if os.path.exists(self.history_file):
+                with open(self.history_file, "r", encoding="utf-8") as f:
+                    history = json.load(f)
+            else:
+                history = []
+        except Exception:
+            history = []
+
+        visit_data["date"] = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+        history.append(visit_data)
+
+        try:
+            with open(self.history_file, "w", encoding="utf-8") as f:
+                json.dump(history, f, ensure_ascii=False, indent=4)
+        except Exception:
+            pass
+
+# Khởi tạo quản lý lịch sử và tri thức cơ bản
+history_mgr = SimpleHistoryManager()
+
+def get_comprehensive_kb():
+    return {
+        "Cột sống cổ": {
+            "Hội chứng cổ vai gáy": {
+                "symptoms": ["Đau mỏi vùng cổ gáy lan bả vai", "Cơ thang co thắt cứng"],
+                "special_tests": ["Spurling test", "Compression test"]
+            }
+        },
+        "Cột sống thắt lưng": {
+            "Thoát vị đĩa đệm L4-L5": {
+                "symptoms": ["Đau thắt lưng lan xuống mông và chân (đau thần kinh tọa)", "Tê bì mu chân"],
+                "special_tests": ["Lasegue test", "Bragard test"]
+            }
+        },
+        "Khớp gối": {
+            "Tổn thương sụn chêm": {
+                "symptoms": ["Đau khe khớp gối", "Hiện tượng kẹt khớp khi xoay gối"],
+                "special_tests": ["McMurray test", "Apley test"]
+            }
+        }
+    }
+
 kb = get_comprehensive_kb()
 
 # Thanh điều hướng chuyển đổi chế độ
@@ -57,6 +122,38 @@ if app_mode == "1. Khám bệnh & Lý luận lâm sàng":
                     st.warning("⚠️ Không tìm thấy lịch sử khám cũ với số điện thoại này.")
             else:
                 st.warning("⚠️ Vui lòng nhập số điện thoại để tra cứu hồ sơ.")
+
+        # Thêm mục tra cứu lịch sử nhanh
+        with st.expander("📁 Lịch sử ca khám đã lưu trong hệ thống"):
+            search_phone_input = st.text_input("Nhập SĐT để tra cứu nhanh:", placeholder="Ví dụ: 0901234567", key="search_history_phone")
+            if search_phone_input:
+                patient_history_list = history_mgr.get_patient_history(search_phone_input)
+                if patient_history_list:
+                    st.success(f"Tìm thấy {len(patient_history_list)} lần khám của SĐT: {search_phone_input}")
+                    for idx, visit in enumerate(patient_history_list):
+                        st.markdown(f"**Lần {idx+1} – Thời gian: {visit.get('date', 'N/A')}**")
+                        st.write(f"• **Họ tên:** {visit.get('patient_name', 'N/A')}")
+                        st.write(f"• **Tóm tắt khám:** {visit.get('summary', 'Không có dữ liệu')}")
+                        st.markdown("---")
+                else:
+                    st.warning("⚠️ Không tìm thấy lịch sử khám nào với số điện thoại này.")
+            
+            st.markdown("##### 📋 Danh sách các ca khám gần đây")
+            try:
+                if os.path.exists(history_mgr.history_file):
+                    with open(history_mgr.history_file, "r", encoding="utf-8") as f:
+                        all_history = json.load(f)
+                    if all_history:
+                        recent_visits = all_history[-5:]
+                        recent_visits.reverse()
+                        for v in recent_visits:
+                            st.text(f"[{v.get('date', 'N/A')}] BN: {v.get('patient_name', 'N/A')} (SĐT: {v.get('patient_phone', 'N/A')})")
+                    else:
+                        st.info("Chưa có ca khám nào được lưu.")
+                else:
+                    st.info("Chưa có tệp dữ liệu lịch sử.")
+            except Exception:
+                st.info("Đang khởi tạo dữ liệu lịch sử...")
 
         st.markdown("---")
         ly_do_vao_vien = st.text_input("🏥 Lý do vào viện:", placeholder="Nhập lý do vào viện...", key="input_ly_do")
@@ -120,12 +217,11 @@ if app_mode == "1. Khám bệnh & Lý luận lâm sàng":
         search_kw = st.text_input("🔍 Tìm kiếm kiến thức / Bệnh lý:", placeholder="Nhập tên bệnh hoặc triệu chứng...")
         st.info("💡 Tra cứu nhanh các bệnh lý cột sống, khớp gối, khớp vai trực tiếp từ hệ thống tri thức chuẩn hóa.")
 
-       # ------------------------------------------
+    # ------------------------------------------
     # 3. PHÂN TÍCH CHẨN ĐOÁN & TỔNG HỢP BỆNH ÁN (CÓ BẢNG ĐỂ BS ĐỌC LẠI)
     # ------------------------------------------
     st.markdown("### 🧠 3. Tổng hợp Bệnh án & Phân tích AI")
     
-    # Tạo từ điển dữ liệu tổng hợp hiện tại của bệnh nhân
     summary_data = {
         "Họ và tên": [patient_name],
         "Tuổi/Năm sinh": [str(patient_age)],
@@ -138,25 +234,20 @@ if app_mode == "1. Khám bệnh & Lý luận lâm sàng":
         "Cờ đỏ (Red Flags)": [", ".join([k for k, v in [("Hội chứng đuôi ngựa", rf_1), ("Sụt cân/Ác tính", rf_2), ("Sốt cao/Viêm", rf_3), ("Yếu liệt nhanh", rf_4)] if v]) or "Không ghi nhận"]
     }
 
-    import pandas as pd
     df_summary = pd.DataFrame(summary_data).T
     df_summary.columns = ["Thông tin ghi nhận"]
 
-    # Hiển thị bảng tổng hợp để bác sĩ đọc lại trực quan
     st.markdown("##### 📋 Bảng tổng hợp chi tiết ca bệnh (Xem trước):")
     st.dataframe(df_summary, use_container_width=True)
 
-    # Nút chạy phân tích AI
     if st.button("🚀 Chạy phân tích AI & Đề xuất phác đồ", type="primary", use_container_width=True):
         st.success(f"✅ Đã phân tích xong ca bệnh cho **{patient_name}**. Hệ thống đã sẵn sàng xuất phác đồ tập vật lý trị liệu.")
 
-    # Các nút tương tác: Copy kết quả, ChatGPT, Gemini
     col_btn1, col_btn2, col_btn3 = st.columns(3)
     with col_btn1:
-        # Chuỗi text hoàn chỉnh để copy
         text_to_copy = f"BỆNH ÁN PHCN\nHọ tên: {patient_name} ({patient_age})\nSĐT: {patient_phone}\nLý do: {ly_do_vao_vien}\nSOCRATES: {summary_data['Bệnh sử SOCRATES'][0]}\nChẩn đoán: {summary_data['Vùng khám & Bệnh lý'][0]}"
         st.code(text_to_copy, language="text")
-        st.caption("👆 Nhấn nút copy ở góc trên khung trên để sao chép toàn bộ.")
+        st.caption("👆 Nhấn nút copy ở góc trên khung để sao chép.")
     with col_btn2:
         if st.button("🟢 ChatGPT", use_container_width=True):
             st.info("Chuyển hướng dữ liệu sang ChatGPT.")
@@ -164,20 +255,19 @@ if app_mode == "1. Khám bệnh & Lý luận lâm sàng":
         if st.button("🟣 Gemini", use_container_width=True):
             st.info("Chuyển hướng dữ liệu sang Gemini.")
 
-    # Nút lưu hồ sơ vào hệ thống (Lưu trên server, không tự động tải file về máy điện thoại)
     st.markdown("---")
     if st.button("💾 Lưu hồ sơ bệnh án vào hệ thống", type="primary", use_container_width=True):
         if not patient_name or not patient_phone:
             st.warning("⚠️ Vui lòng điền đầy đủ Họ tên và SĐT bệnh nhân!")
         else:
+            exam_summary = f"Vùng: {region if 'region' in locals() else ''} | Bệnh lý: {pathology if 'pathology' in locals() else ''}"
             exam_data = {
                 "patient_name": patient_name,
                 "patient_phone": patient_phone,
-                "summary": f"Vùng: {region if 'region' in locals() else ''} | Bệnh lý: {pathology if 'pathology' in locals() else ''}"
+                "summary": exam_summary
             }
             history_mgr.save_visit(patient_phone, exam_data)
-            st.success(f"✅ Đã lưu thành công hồ sơ bệnh án cho bệnh nhân **{patient_name}** vào hệ thống!")
-# MỤC 2: THƯ VIỆN CHI TIẾT BÀI TẬP PHCN (8 NHÓM - 7 BÀI TẬP CÓ MÔ TẢ ĐẦY ĐỦ)
+            st.success(f"✅ Đã lưu thành công hồ sơ bệnh án cho bệnh nhân **{patient_name}** vào hệ # MỤC 2: THƯ VIỆN CHI TIẾT BÀI TẬP PHCN (8 NHÓM - 7 BÀI TẬP CÓ MÔ TẢ ĐẦY ĐỦ)
 # ------------------------------------------
 else:
     st.subheader("🏋️‍♂️ Thư viện Chi tiết Bài Tập Phục Hồi Chức Năng Chuyên Sâu")
