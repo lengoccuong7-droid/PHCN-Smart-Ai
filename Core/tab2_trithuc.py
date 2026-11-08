@@ -83,5 +83,6 @@ def render_tab2():
             st.markdown("##### 📄 Nguyên tắc Vận động Trị liệu Y học Chứng cứ")
             st.markdown("""
             * **Mục tiêu:** Phòng ngừa co rút biến dạng, gia tăng khả năng độc lập sinh hoạt tối đa cho người bệnh.
-            * **Nguyên tắc cốt lõi:** Bắt đầu càng sớm càng tốt khi tình trạng toàn thân ổn định.
+            * **Nguyên tắc cốt lõi:** Bắt đầu càng sớm càng tốt khi tình trạng toàn thân ổn định; loại bỏ mẫu vận động bất thường bằng kỹ thuật tạo thuận thần kinh cơ.
+            * **Đánh giá lại:** Lượng giá biên độ vận động và sức cơ định kỳ mỗi 2 tuần để điều chỉnh cường độ tập luyện.
             """)
