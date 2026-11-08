@@ -1,9 +1,13 @@
+# =========================================================
+# TAB 3: KHÁM LÂM SÀNG CHUYÊN SÂU (TÍCH HỢP ẢNH LÂM SÀNG & TỜ GIẤY TRẮNG REAL-TIME)
+# =========================================================
 import streamlit as st
 
 def render(history_mgr):
     if "exam_active_region" not in st.session_state:
         st.session_state.exam_active_region = None
 
+    # MÀN HÌNH 1: LƯỚI NÚT BẤM CHỌN VÙNG KHÁM
     if st.session_state.exam_active_region is None:
         st.subheader("🎯 Chọn Vùng Thăm Khám Lâm Sàng")
         st.markdown("Chọn một vùng cơ thể bên dưới để mở phiếu thăm khám chuyên sâu độc lập:")
@@ -32,6 +36,8 @@ def render(history_mgr):
                     if st.button("🩺 Bắt đầu khám", use_container_width=True, key=f"open_exam_{idx}"):
                         st.session_state.exam_active_region = title
                         st.rerun()
+                        
+    # MÀN HÌNH 2: TRANG CHI TIẾT KHÁM & TỜ GIẤY TRẮNG ĐỒNG BỘ THỜI GIAN THỰC
     else:
         current_reg = st.session_state.exam_active_region
 
@@ -42,10 +48,12 @@ def render(history_mgr):
         st.markdown("---")
         st.subheader(f"📋 PHIẾU KHÁM LÂM SÀNG: {current_reg.upper()}")
         
+        # Lấy dữ liệu hành chính tự động đồng bộ từ Tab 1
         active_patient = st.session_state.get("current_patient", {"name": "", "phone": "", "age": 1990, "job": ""})
         if active_patient.get("name"):
-            st.info(f"🔗 Đang liên kết bệnh nhân: **{active_patient.get('name')}** (SĐT: {active_patient.get('phone')})")
+            st.info(f"🔗 Đang liên kết tự động từ Tab 1 – Bệnh nhân: **{active_patient.get('name')}** (SĐT: {active_patient.get('phone')})")
 
+        # 1. HÀNH CHÍNH & HỎI BỆNH
         st.markdown("##### ✍️ 1. Hành chính & Lý do khám")
         col_p1, col_p2 = st.columns(2)
         with col_p1:
@@ -55,7 +63,7 @@ def render(history_mgr):
             p_age = st.number_input("Năm sinh:", min_value=1900, max_value=2026, value=int(active_patient.get("age", 1990)), key="rt_p_age")
             p_job = st.text_input("Nghề nghiệp:", value=active_patient.get("job", ""), placeholder="Nhập nghề nghiệp...", key="rt_p_job")
 
-        ly_do = st.text_input("🏥 Lý do vào viện / Than phiền chính:", placeholder="Ví dụ: Đau vai lan xuống tay...", key="rt_ly_do")
+        ly_do = st.text_input("🏥 Lý do vào viện / Than phiền chính:", placeholder="Ví dụ: Đau vai lan xuống tay, hạn chế xoay cổ...", key="rt_ly_do")
         tien_su = st.text_area("📜 Tiền sử bệnh (Bản thân / Gia đình / Chấn thương):", placeholder="Nhập tiền sử...", key="rt_tien_su")
 
         with st.expander("🩺 2. Bệnh sử (Quy trình SOCRATES)", expanded=True):
@@ -70,12 +78,28 @@ def render(history_mgr):
             with col_nrs2:
                 nrs_note = st.text_input("Ghi chú thêm mức độ đau:", placeholder="Đau tăng về đêm...", key="rt_nrs_note")
 
+        # 2. KHÁM THỰC THỂ: NHÌN - SỜ - ĐO (ROM)
         with st.expander("🔍 3. Khám thực thể (Nhìn – Sờ – Đo ROM)", expanded=True):
-            inspect = st.text_area("👁️ NHÌN (Inspection):", placeholder="Quan sát biến dạng xương khớp, lệch vẹo...", key="rt_inspect")
+            inspect = st.text_area("👁️ NHÌN (Inspection):", placeholder="Quan sát biến dạng, lệch vẹo tư thế, sưng nề, teo cơ...", key="rt_inspect")
             palp = st.text_area("✋ SỜ (Palpation):", placeholder="Xác định điểm đau chói, trương lực cơ...", key="rt_palp")
-            rom_meas = st.text_area("📏 ĐO / GÕ (ROM & Phản xạ):", placeholder="Tầm vận động khớp, lực cơ MMT...", key="rt_rom")
+            rom_meas = st.text_area("📏 ĐO / GÕ (ROM & Phản xạ):", placeholder="Tầm vận động khớp, lực cơ MMT, phản xạ gân xương...", key="rt_rom")
 
-        with st.expander(f"🧬 4. Nghiệm pháp / Test đặc hiệu chuyên khoa ({current_reg})", expanded=True):
+        # 3. MỤC TẢI LÊN / CHỤP HÌNH ẢNH LÂM SÀNG (X-QUANG, TƯ THẾ, TỔN THƯƠNG)
+        with st.expander("🖼️ 4. Hình ảnh Lâm sàng & Cận lâm sàng (X-quang, MRI, Dáng đi, Tư thế)", expanded=True):
+            st.caption("Tải tệp ảnh có sẵn hoặc chụp hình trực tiếp từ máy tính/điện thoại:")
+            
+            col_img1, col_img2 = st.columns(2)
+            with col_img1:
+                uploaded_image = st.file_uploader("📤 Tải ảnh X-quang / MRI / Tổn thương:", type=["png", "jpg", "jpeg"], key="rt_uploaded_img")
+            with col_img2:
+                camera_image = st.camera_input("📷 Chụp hình ảnh lâm sàng trực tiếp:", key="rt_camera_img")
+            
+            selected_img = uploaded_image if uploaded_image is not None else camera_image
+            if selected_img is not None:
+                st.image(selected_img, caption="🖼️ Hình ảnh lâm sàng được ghi nhận", use_container_width=True)
+
+        # 4. TEST ĐẶC HIỆU TỰ ĐỘNG THEO VÙNG (CÓ CÔNG DỤNG, KỸ THUẬT & NHẬP KẾT QUẢ)
+        with st.expander(f"🧬 5. Nghiệm pháp / Test đặc hiệu chuyên khoa ({current_reg})", expanded=True):
             st.caption("Đánh giá các test lâm sàng đặc hiệu có sẵn cho vùng cơ thể này:")
 
             specific_tests_db = {
@@ -106,7 +130,7 @@ def render(history_mgr):
                 ],
                 "Khớp háng": [
                     ("FADIR Test", "Đánh giá kẹp háng (FAI) hoặc rách sụn bọc ổ cối", "Gập háng 90 độ, khép háng và xoay trong khớp háng."),
-                    ("Thomas Test", "Đánh giá co rút cơ thắt lưng chậu (Iliopsoas)", "Nằm ngửa, co tối đa một bên gối áp sát ngực. Xem chân còn lại có bị hổng khỏi mặt giường."),
+                    ("Thomas Test", "Đánh giá co rút cơ thắt lưng chậu (Iliopsoas)", "Nằm ngửa, co tối đa một bên gối áp sát ngục. Xem chân còn lại có bị hổng khỏi mặt giường."),
                     ("Trendelenburg Test", "Đánh giá yếu cơ mông nhỡ (Gluteus medius)", "Bệnh nhân đứng một chân. Quan sát xem khung chậu bên đối diện có bị xệ xuống.")
                 ],
                 "Khớp gối": [
@@ -136,55 +160,62 @@ def render(history_mgr):
                 st.markdown(f"**🔹 {t_idx+1}. {t_name}**")
                 st.caption(f"• **Công dụng:** {t_use}  \n• **Kỹ thuật:** {t_tech}")
                 
-                res = st.radio(f"Kết quả {t_name}:", ["Chưa làm / Âm tính (-)", "Dương tính (+)"], horizontal=True, key=f"ex_t_res_{t_idx}")
+                res = st.radio(f"Nhập kết quả {t_name}:", ["Chưa làm / Âm tính (-)", "Dương tính (+)"], horizontal=True, key=f"ex_t_res_{t_idx}")
                 test_results[t_name] = res
                 st.markdown("---")
 
-        with st.expander("🚩 5. Cờ đỏ an toàn lâm sàng (Red Flags)"):
+        with st.expander("🚩 6. Cờ đỏ an toàn lâm sàng (Red Flags)"):
             rf_1 = st.checkbox("Hội chứng đuôi ngựa / Rối loạn cơ tròn", key="rt_rf1")
             rf_2 = st.checkbox("Sụt cân nhanh không rõ nguyên nhân / Tiền sử ung thư", key="rt_rf2")
             rf_3 = st.checkbox("Sốt cao, sưng nóng đỏ đau cấp tính", key="rt_rf3")
 
+        # 5. TỜ GIẤY TRẮNG TỔNG HỢP & PHÂN TÍCH AI (REAL-TIME AUTO-SYNC)
         st.markdown("---")
         st.markdown("### 🧠 TỜ GIẤY TRẮNG TỔNG HỢP & PHÂN TÍCH AI (Real-time)")
 
         has_pos_test = any([v == "Dương tính (+)" for v in test_results.values()])
-        is_blank = not (p_name or ly_do or tien_su or onset or character or inspect or palp or rom_meas or has_pos_test or rf_1 or rf_2 or rf_3 or (nrs > 0))
+        is_blank = not (p_name or ly_do or tien_su or onset or character or inspect or palp or rom_meas or has_pos_test or rf_1 or rf_2 or rf_3 or (nrs > 0) or (selected_img is not None))
 
         if is_blank:
-            st.info("📄 *[Tờ giấy trắng]* — Chưa có dữ liệu. Mọi thông tin bác sĩ nhập ở các phần phía trên sẽ tự động sinh nội dung hiển thị tại đây theo thời gian thực.")
+            st.info("📄 *[Tờ giấy trắng]* — Chưa có dữ liệu. Mọi thông tin hành chính từ Tab 1 và dữ liệu thăm khám/hình ảnh nhập phía trên sẽ tự động đồng bộ hiển thị tại đây theo thời gian thực.")
         else:
             col_sum1, col_sum2 = st.columns(2)
             with col_sum1:
-                st.markdown("##### 📋 Tóm tắt ca bệnh (Tự động cập nhật)")
-                if p_name: st.markdown(f"• **Bệnh nhân:** {p_name} (Năm sinh: {p_age})")
-                st.markdown(f"• **Vùng khám:** {current_reg}")
-                if ly_do: st.markdown(f"• **Lý do NV:** {ly_do}")
+                st.markdown("##### 📋 Tóm tắt ca bệnh (Đồng bộ thời gian thực)")
+                if p_name: 
+                    st.markdown(f"• **Họ tên bệnh nhân:** {p_name}")
+                st.markdown(f"• **Năm sinh:** {p_age} | **Nghề nghiệp:** {p_job if p_job else 'Chưa cập nhật'}")
+                st.markdown(f"• **Vùng khám chuyên khoa:** {current_reg}")
+                if ly_do: st.markdown(f"• **Lý do khám:** {ly_do}")
                 if tien_su: st.markdown(f"• **Tiền sử:** {tien_su}")
-                if character: st.markdown(f"• **Bệnh sử:** {character} (NRS: {nrs}/10)")
-                if inspect: st.markdown(f"• **Nhìn:** {inspect}")
-                if palp: st.markdown(f"• **Sờ:** {palp}")
-                if rom_meas: st.markdown(f"• **Đo (ROM):** {rom_meas}")
+                if character: st.markdown(f"• **Bệnh sử (SOCRATES):** {character} (Mức đau NRS: {nrs}/10)")
+                if inspect: st.markdown(f"• **Nhìn (Inspection):** {inspect}")
+                if palp: st.markdown(f"• **Sờ (Palpation):** {palp}")
+                if rom_meas: st.markdown(f"• **Đo (ROM/Phản xạ):** {rom_meas}")
+                
+                if selected_img is not None:
+                    st.markdown("• **Hình ảnh lâm sàng:** Đã đính kèm 1 hình ảnh (X-quang/Tư thế).")
+                    st.image(selected_img, width=150)
                 
                 pos_tests_list = [t for t, res in test_results.items() if res == "Dương tính (+)"]
                 if pos_tests_list:
-                    st.markdown(f"• **Test dương tính (+):** {', '.join(pos_tests_list)}")
+                    st.markdown(f"• **Test đặc hiệu dương tính (+):** {', '.join(pos_tests_list)}")
                 
                 if rf_1 or rf_2 or rf_3:
-                    st.error("🚩 **CẢNH BÁO CỜ ĐỎ:** Phát hiện dấu hiệu nguy cơ cao!")
+                    st.error("🚩 **CẢNH BÁO CỜ ĐỎ:** Phát hiện dấu hiệu nguy cơ cao lâm sàng!")
 
             with col_sum2:
                 st.markdown("##### 🤖 Đề xuất chẩn đoán & PHCN từ AI")
-                st.success("Hệ thống đã nhận diện dữ liệu lâm sàng thời gian thực.")
+                st.success("Hệ thống đã nhận diện dữ liệu lâm sàng và hình ảnh thời gian thực.")
                 if st.button("🚀 Chạy phân tích AI chuyên sâu", type="primary", use_container_width=True):
-                    st.info("Đang xử lý phân tích chẩn đoán...")
+                    st.info("Đang xử lý phân tích chẩn đoán hình ảnh và đề xuất phác đồ PHCN...")
 
             st.markdown("---")
             if st.button("💾 Lưu hồ sơ bệnh án vào hệ thống lịch sử", type="primary", use_container_width=True):
                 if not (p_name and p_phone):
-                    st.warning("⚠️ Vui lòng nhập đầy đủ Họ tên và Số điện thoại!")
+                    st.warning("⚠️ Vui lòng nhập đầy đủ Họ tên và Số điện thoại ở phần hành chính phía trên!")
                 else:
-                    exam_summary = f"Vùng: {current_reg} | Lý do: {ly_do} | NRS: {nrs}/10 | Test(+): {', '.join(pos_tests_list) if pos_tests_list else 'Không'}"
+                    exam_summary = f"Vùng: {current_reg} | Lý do: {ly_do} | NRS: {nrs}/10 | Ảnh: {'Có' if selected_img else 'Không'} | Test(+): {', '.join(pos_tests_list) if pos_tests_list else 'Không'}"
                     visit_data = {
                         "patient_name": p_name,
                         "patient_phone": p_phone,
@@ -193,4 +224,4 @@ def render(history_mgr):
                         "summary": exam_summary
                     }
                     history_mgr.save_visit(p_phone, visit_data)
-                    st.success(f"✅ Đã lưu thành công hồ sơ cho bệnh nhân **{p_name}**!")
+                    st.success(f"✅ Đã lưu thành công hồ sơ cho bệnh nhân **{p_name}** vào hệ thống lịch sử!")
