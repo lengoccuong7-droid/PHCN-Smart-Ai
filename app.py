@@ -4,7 +4,7 @@
 import streamlit as st
 import datetime
 
-# 1. Cấu hình giao diện trang & CSS tối ưu sát lề gọn gàng
+# Cấu hình giao diện trang & CSS tối ưu sát lề gọn gàng
 st.set_page_config(
     page_title="PHCN AI 1.8 - Trợ lý lâm sàng PHCN",
     page_icon="🩺",
@@ -25,7 +25,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 2. Quản lý lịch sử khám bệnh
+# Quản lý lịch sử khám bệnh
 class SimpleHistoryManager:
     def __init__(self):
         if "db_history" not in st.session_state:
@@ -45,11 +45,11 @@ if "history_mgr" not in st.session_state:
 
 history_mgr = st.session_state.history_mgr
 
-# 3. Tiêu đề ứng dụng
+# Tiêu đề ứng dụng
 st.markdown("### 🩺 PHCN AI 1.8")
 st.caption("Trợ lý lâm sàng Phục hồi chức năng & Vật lý trị liệu toàn diện")
 
-# 4. Khởi tạo 4 tab chính (Bắt buộc phải nằm trên cùng trước các lệnh with tab)
+# Khởi tạo 4 tab chính
 tab1, tab2, tab3, tab4 = st.tabs([
     "1. Hồ sơ", 
     "2. Tri thức", 
@@ -57,9 +57,9 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "4. PHCN"
 ])
 
-# ------------------------------------------
-# TAB 1: HỒ SƠ BỆNH NHÂN, LỊCH SỬ & THÊM MỚI
-# ------------------------------------------
+# =========================================================
+# TAB 1: QUẢN LÝ HỒ SƠ, LỊCH SỬ & THÊM MỚI BỆNH NHÂN
+# =========================================================
 with tab1:
     st.subheader("👤 Quản lý Hồ sơ, Lịch sử & Thêm mới Bệnh nhân")
     
@@ -123,16 +123,18 @@ with tab1:
                         "job": new_job
                     }
                     st.success(f"✅ Đã tạo và lưu thành công hồ sơ cho bệnh nhân **{new_name}**! Bạn có thể chuyển sang Tab Khám để tiếp tục.")
-# ------------------------------------------
-# TAB 2: CƠ SỞ TRI THỨC LÂM SÀNG
-# ------------------------------------------
+
+
+# =========================================================
+# TAB 2: CƠ SỞ TRI THỨC LÂM SÀNG (GIAO DIỆN LƯỚI & CHUYỂN CẢNH)
+# =========================================================
 with tab2:
     if "kb_detail_page" not in st.session_state:
         st.session_state.kb_detail_page = None
 
     if st.session_state.kb_detail_page is None:
         st.subheader("📖 Cẩm nang Tri thức & Phác đồ Lâm sàng")
-        st.markdown("Chọn một chuyên khoa bên dưới để xem tài liệu chi tiết[span_2](start_span)[span_2](end_span):")
+        st.markdown("Chọn một chuyên khoa bên dưới để xem tài liệu chi tiết:")
 
         search_knowledge_kw = st.text_input("🔍 Tìm kiếm nhanh bệnh lý, triệu chứng...", placeholder="Nhập từ khóa...", key="search_knowledge_input")
 
@@ -283,136 +285,152 @@ with tab2:
         if st.button("⬅️ Quay lại danh mục chuyên khoa", type="primary", key="bottom_back_btn"):
             st.session_state.kb_detail_page = None
             st.rerun()
-# ------------------------------------------
-# TAB 3: CHỌN VÙNG & NHẬP LIỆU THĂM KHÁM (REAL-TIME AUTO-SYNC)
-# ------------------------------------------
+
+
+# =========================================================
+# TAB 3: CHỌN VÙNG KHÁM & NHẬP LIỆU (CHUYỂN CẢNH & TỜ GIẤY TRẮNG TỰ ĐỘNG SINH DỮ LIỆU)
+# =========================================================
 with tab3:
-    st.subheader("🎯 Bước 1: Chọn vùng thăm khám lâm sàng")
-    st.markdown("Nhấn chọn một vùng cơ thể bên dưới để mở giao diện nhập liệu thăm khám độc lập:")
+    if "exam_active_region" not in st.session_state:
+        st.session_state.exam_active_region = None
 
-    if "selected_region" not in st.session_state:
-        st.session_state.selected_region = None
+    # MÀN HÌNH 1: LƯỚI CHỌN VÙNG KHÁM (GIỐNG TAB 2 & TAB 4)
+    if st.session_state.exam_active_region is None:
+        st.subheader("🎯 Chọn Vùng Thăm Khám Lâm Sàng")
+        st.markdown("Chọn một vùng cơ thể bên dưới để bắt đầu quy trình khám lâm sàng:")
 
-    col_c1, col_c2, col_c3 = st.columns(3)
-    regions = [
-        "Cột sống cổ", "Cột sống thắt lưng", "Khớp vai",
-        "Khuỷu tay", "Cổ tay – bàn tay", "Khớp háng",
-        "Khớp gối", "Cổ chân – bàn chân", "Thần kinh & Khác"
-    ]
-    
-    for idx, reg in enumerate(regions):
-        col_target = [col_c1, col_c2, col_c3][idx % 3]
-        with col_target:
-            if st.button(f"📌 {reg}", use_container_width=True, key=f"btn_choose_reg_{idx}"):
-                st.session_state.selected_region = reg
-                st.session_state.exam_live_data = {}
+        regions = [
+            ("Cột sống cổ", "🦴", "C1-C7 và hội chứng chèn ép"),
+            ("Cột sống thắt lưng", "🩻", "Thoát vị đĩa đệm, đau thần kinh tọa"),
+            ("Khớp vai", "🦾", "Chóp xoay & đông cứng khớp vai"),
+            ("Khuỷu tay", "💪", "Viêm lồi cầu, hội chứng ống khuỷu"),
+            ("Cổ tay – bàn tay", "✋", "Hội chứng ống cổ tay, De Quervain"),
+            ("Khớp háng", "🦿", "Thoái hóa & kẹp háng FAI"),
+            ("Khớp gối", "🦵", "ACL, sụn chêm & thoái hóa gối"),
+            ("Cổ chân – bàn chân", "🦶", "Bong gân & viêm cân gan chân"),
+            ("Thần kinh & Khác", "🧠", "Đột quỵ, phục hồi chức năng thần kinh")
+        ]
 
-    if st.session_state.selected_region:
+        cols_r = st.columns(3)
+        for idx, item in enumerate(regions):
+            title, icon, desc = item
+            col_target = cols_r[idx % 3]
+            with col_target:
+                with st.container(border=True):
+                    st.markdown(f"<h3 style='text-align: center; margin: 0;'>{icon}</h3>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='text-align: center; font-weight: bold; margin: 5px 0;'>{title}</p>", unsafe_allow_html=True)
+                    st.caption(desc)
+                    if st.button("🩺 Bắt đầu khám", use_container_width=True, key=f"open_exam_{idx}"):
+                        st.session_state.exam_active_region = title
+                        st.rerun()
+
+    # MÀN HÌNH 2: TRANG CHI TIẾT KHÁM & TỜ GIẤY TRẮNG TỰ ĐỘNG HIỆN THÔNG TIN
+    else:
+        current_reg = st.session_state.exam_active_region
+
+        if st.button("⬅️ Quay lại chọn vùng khám", type="secondary", key="back_to_exam_grid"):
+            st.session_state.exam_active_region = None
+            st.rerun()
+
         st.markdown("---")
-        st.success(f"📍 Đang thực hiện khám cho vùng: **{st.session_state.selected_region}**")
-
-        if "exam_live_data" not in st.session_state:
-            st.session_state.exam_live_data = {}
-
+        st.subheader(f"📋 PHIẾU KHÁM LÂM SÀNG: {current_reg.upper()}")
+        
         active_patient = st.session_state.get("current_patient", {"name": "", "phone": "", "age": 1990, "job": ""})
         if active_patient.get("name"):
-            st.info(f"🔗 Đang liên kết với bệnh nhân: **{active_patient.get('name')}** (SĐT: {active_patient.get('phone')})")
+            st.info(f"🔗 Đang liên kết bệnh nhân: **{active_patient.get('name')}** (SĐT: {active_patient.get('phone')})")
 
-        st.markdown("#### 📋 Bước 2: Nhập liệu thăm khám trực tiếp")
-        
+        # 1. PHẦN NHẬP LIỆU BÁC SĨ
+        st.markdown("##### ✍️ Nhập liệu thông tin bệnh án")
         col_p1, col_p2 = st.columns(2)
         with col_p1:
-            patient_name = st.text_input("Họ tên bệnh nhân:", value=active_patient.get("name", ""), placeholder="Nhập họ tên...", key="live_p_name")
-            patient_phone = st.text_input("Số điện thoại / Mã BN:", value=active_patient.get("phone", ""), placeholder="Nhập SĐT...", key="live_p_phone")
+            p_name = st.text_input("Họ tên bệnh nhân:", value=active_patient.get("name", ""), placeholder="Nhập họ tên...", key="ex_p_name")
+            p_phone = st.text_input("Số điện thoại:", value=active_patient.get("phone", ""), placeholder="Nhập SĐT...", key="ex_p_phone")
         with col_p2:
-            patient_age = st.number_input("Năm sinh:", min_value=1900, max_value=2026, value=int(active_patient.get("age", 1990)), key="live_p_age")
-            patient_job = st.text_input("Nghề nghiệp:", value=active_patient.get("job", ""), placeholder="Nhập nghề nghiệp...", key="live_p_job")
+            p_age = st.number_input("Năm sinh:", min_value=1900, max_value=2026, value=int(active_patient.get("age", 1990)), key="ex_p_age")
+            p_job = st.text_input("Nghề nghiệp:", value=active_patient.get("job", ""), placeholder="Nhập nghề nghiệp...", key="ex_p_job")
 
-        st.markdown("---")
-        ly_do_vao_vien = st.text_input("🏥 Lý do vào viện:", placeholder="Nhập lý do vào viện...", key="live_ly_do")
-        tien_su = st.text_area("📜 Tiền sử bệnh (Bản thân / Gia đình):", placeholder="Nhập tiền sử...", key="live_tien_su")
+        ly_do = st.text_input("🏥 Lý do vào viện:", placeholder="Nhập lý do vào viện...", key="ex_ly_do")
+        tien_su = st.text_area("📜 Tiền sử bệnh:", placeholder="Nhập tiền sử bệnh...", key="ex_tien_su")
 
         with st.expander("🩺 Bệnh sử (SOCRATES)", expanded=True):
-            site = st.text_input("S – Vị trí đau:", value=st.session_state.selected_region, key="live_site")
-            onset = st.text_input("O – Khởi phát:", placeholder="Hoàn cảnh khởi phát...", key="live_onset")
-            character = st.text_input("C – Tính chất đau:", placeholder="Nhói, âm ỉ, tê bì...", key="live_character")
-            radiation = st.text_input("R – Hướng lan:", placeholder="Lan đi đâu...", key="live_radiation")
-            associations = st.text_input("A – Triệu chứng đi kèm:", placeholder="Yếu cơ, sưng nề...", key="live_associations")
-            time_course = st.text_input("T – Diễn tiến:", placeholder="Tăng về đêm, liên tục...", key="live_time_course")
+            onset = st.text_input("O – Khởi phát:", placeholder="Hoàn cảnh khởi phát...", key="ex_onset")
+            character = st.text_input("C – Tính chất đau:", placeholder="Nhói, âm ỉ...", key="ex_char")
+            radiation = st.text_input("R – Hướng lan:", placeholder="Lan đi đâu...", key="ex_rad")
+            associations = st.text_input("A – Triệu chứng đi kèm:", placeholder="Yếu cơ, sưng nề...", key="ex_assoc")
             
             col_nrs1, col_nrs2 = st.columns([1, 2])
             with col_nrs1:
-                nrs_score = st.selectbox("Điểm NRS (0-10):", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], key="live_nrs")
+                nrs = st.selectbox("Điểm NRS (0-10):", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], key="ex_nrs")
             with col_nrs2:
-                nrs_note = st.text_input("Ghi chú mức độ đau:", placeholder="Mô tả thêm...", key="live_nrs_note")
+                nrs_note = st.text_input("Ghi chú mức độ đau:", placeholder="Mô tả thêm...", key="ex_nrs_note")
 
-        with st.expander("🔍 Khám thực thể (Nhìn - Sờ - Gõ)", expanded=True):
-            inspect_note = st.text_input("👁️ Nhìn (Inspection):", placeholder="Biến dạng, sưng nề, lệch vẹo...", key="live_inspect")
-            palp_note = st.text_input("✋ Sờ (Palpation):", placeholder="Điểm đau, nhiệt độ da, trương lực...", key="live_palp")
-            per_meas_note = st.text_input("📏 Gõ / Đo (Percussion):", placeholder="Tầm vận động ROM, phản xạ...", key="live_per_meas")
+        with st.expander("🔍 Khám thực thể & Test lâm sàng", expanded=True):
+            inspect = st.text_input("👁️ Nhìn (Inspection):", placeholder="Biến dạng, sưng nề...", key="ex_inspect")
+            palp = st.text_input("✋ Sờ (Palpation):", placeholder="Điểm đau, nhiệt độ da...", key="ex_palp")
+            t1 = st.checkbox("Test đặc hiệu dương tính (+)", key="ex_t1")
+            test_note = st.text_input("Ghi chú kết quả test:", placeholder="Mô tả test...", key="ex_t_note")
 
-        with st.expander("👤 3-4 Test đặc hiệu / Nghiệm pháp", expanded=True):
-            t1 = st.checkbox("Test đặc hiệu 1 (+ Dương tính)", key="live_t1")
-            t2 = st.checkbox("Test đặc hiệu 2 (+ Dương tính)", key="live_t2")
-            t3 = st.checkbox("Test đặc hiệu 3 (+ Dương tính)", key="live_t3")
-            test_note = st.text_input("Ghi chú thêm về test lâm sàng:", placeholder="Mô tả kết quả nghiệm pháp...", key="live_test_note")
+        with st.expander("🚩 Cờ đỏ an toàn & Hình ảnh y khoa"):
+            rf_1 = st.checkbox("Hội chứng đuôi ngựa / Rối loạn tiểu tiện", key="ex_rf1")
+            rf_2 = st.checkbox("Sụt cân / Nghi ngờ ác tính", key="ex_rf2")
+            # THÊM MỤC TẢI ẢNH / TỆP ĐÍNH KÈM
+            uploaded_images = st.file_uploader("📷 Tải lên hình ảnh X-quang / MRI / Lâm sàng:", accept_multiple_files=True, type=["jpg", "png", "jpeg"], key="ex_images")
 
-        with st.expander("🚩 Cờ đỏ an toàn & Tệp đính kèm"):
-            rf_1 = st.checkbox("Hội chứng đuôi ngựa / Rối loạn tiểu tiện", key="live_rf1")
-            rf_2 = st.checkbox("Sụt cân / Nghi ngờ ác tính", key="live_rf2")
-            uploaded_files = st.file_uploader("Tải lên hình ảnh / X-quang / MRI:", accept_multiple_files=True, type=["jpg", "png", "pdf"], key="live_files")
-
-        # Tổng hợp dữ liệu tự động thời gian thực
+        # 2. PHẦN TỔNG HỢP DỮ LIỆU (TỪ TỜ GIẤY TRẮNG TỰ ĐỘNG HIỆN LÊN THEO THỜI GIAN THỰC)
         st.markdown("---")
-        st.markdown("### 🧠 Phân tích chẩn đoán & PHCN AI (Real-time Sync)")
+        st.markdown("### 🧠 TỔNG HỢP CA BỆNH & PHÂN TÍCH AI")
         
-        col_sum1, col_sum2 = st.columns(2)
-        with col_sum1:
-            st.markdown("##### 📋 Tổng hợp dữ liệu (Tự động cập nhật)")
-            st.markdown(f"✔️ **Bệnh nhân:** {patient_name if patient_name else '---'}")
-            st.markdown(f"✔️ **Vùng khám:** {st.session_state.selected_region}")
-            st.markdown(f"✔️ **Lý do NV:** {ly_do_vao_vien if ly_do_vao_vien else '---'}")
-            st.markdown(f"✔️ **Tiền sử:** {tien_su if tien_su else 'Không ghi nhận'}")
-            st.markdown(f"✔️ **Đau (NRS):** {nrs_score}/10")
-            st.markdown(f"✔️ **Test dương tính:** {[t for t, check in [('Test 1', t1), ('Test 2', t2), ('Test 3', t3)] if check] or 'Không ghi nhận'}")
-            if rf_1 or rf_2:
-                st.error("🚩 **CẢNH BÁO CỜ ĐỎ AN TOÀN:** Phát hiện dấu hiệu nguy hiểm cần chú ý!")
+        # Khung giấy trắng: Chỉ hiện nội dung khi bác sĩ bắt đầu gõ hoặc tích chọn thông tin
+        has_content = p_name or ly_do or tien_su or onset or character or inspect or t1 or rf_1 or rf_2 or uploaded_images
         
-        with col_sum2:
-            st.markdown("##### 📄 Kết quả phân tích AI")
-            st.info("Nhấn nút bên dưới để chạy phân tích lâm sàng chi tiết từ trợ lý AI dựa trên dữ liệu đang nhập...")
+        if not has_content:
+            st.info("📄 *Phiếu tổng hợp đang trống (Tờ giấy trắng). Thông tin bác sĩ nhập ở các mục phía trên sẽ tự động hiển thị và cập nhật tức thời tại đây.*")
+        else:
+            col_sum1, col_sum2 = st.columns(2)
+            with col_sum1:
+                st.markdown("##### 📋 Thông tin ghi nhận")
+                if p_name: st.markdown(f"• **Họ tên:** {p_name} (Năm sinh: {p_age})")
+                st.markdown(f"• **Vùng khám:** {current_reg}")
+                if ly_do: st.markdown(f"• **Lý do NV:** {ly_do}")
+                if tien_su: st.markdown(f"• **Tiền sử:** {tien_su}")
+                if character: st.markdown(f"• **Tính chất đau:** {character} (NRS: {nrs}/10)")
+                if inspect: st.markdown(f"• **Thực thể:** {inspect}")
+                if t1: st.markdown("• **Test lâm sàng:** Dương tính (+)")
+                if rf_1 or rf_2:
+                    st.error("🚩 **CẢNH BÁO CỜ ĐỎ:** Phát hiện dấu hiệu nguy hiểm!")
+                
+                # Hiển thị ảnh đã tải lên nếu có
+                if uploaded_images:
+                    st.markdown(f"• **Hình ảnh đính kèm:** {len(uploaded_images)} tệp")
+                    for img in uploaded_images:
+                        st.image(img, caption=img.name, width=200)
 
-        if st.button("🚀 Chạy phân tích AI", type="primary", use_container_width=True):
-            st.success("✅ Phân tích ca bệnh hoàn tất!")
+            with col_sum2:
+                st.markdown("##### 🤖 Đề xuất chẩn đoán từ AI")
+                st.success("Hệ thống sẵn sàng phân tích dựa trên dữ liệu thời gian thực.")
+                if st.button("🚀 Chạy phân tích AI chuyên sâu", type="primary", use_container_width=True):
+                    st.info("Đang tổng hợp dữ liệu và hình ảnh để đưa ra nhận định lâm sàng...")
 
-        col_b1, col_b2, col_b3 = st.columns(3)
-        with col_b1:
-            st.button("📋 Copy kết quả", use_container_width=True)
-        with col_b2:
-            st.button("🟢 ChatGPT", use_container_width=True)
-        with col_b3:
-            st.button("🟣 Gemini", use_container_width=True)
+            st.markdown("---")
+            if st.button("💾 Lưu hồ sơ bệnh án vào hệ thống lịch sử", type="primary", use_container_width=True):
+                if not (p_name and p_phone):
+                    st.warning("⚠️ Vui lòng nhập đầy đủ Họ tên và Số điện thoại ở phần trên để lưu trữ!")
+                else:
+                    exam_summary = f"Vùng: {current_reg} | Lý do: {ly_do} | NRS: {nrs}/10"
+                    visit_data = {
+                        "patient_name": p_name,
+                        "patient_phone": p_phone,
+                        "patient_age": p_age,
+                        "patient_job": p_job,
+                        "summary": exam_summary
+                    }
+                    history_mgr.save_visit(p_phone, visit_data)
+                    st.success(f"✅ Đã lưu thành công hồ sơ cho bệnh nhân **{p_name}** vào hệ thống lịch sử!")
 
-        st.markdown("---")
-        if st.button("💾 Lưu hồ sơ bệnh án vào hệ thống lịch sử", type="primary", use_container_width=True):
-            if not (patient_name and patient_phone):
-                st.warning("⚠️ Vui lòng điền đầy đủ Họ tên và SĐT ở phần hành chính phía trên để lưu trữ!")
-            else:
-                exam_summary = f"Vùng: {st.session_state.selected_region} | Lý do: {ly_do_vao_vien} | NRS: {nrs_score}/10"
-                visit_data = {
-                    "patient_name": patient_name,
-                    "patient_phone": patient_phone,
-                    "patient_age": patient_age,
-                    "patient_job": patient_job,
-                    "summary": exam_summary
-                }
-                history_mgr.save_visit(patient_phone, visit_data)
-                st.success(f"✅ Đã lưu thành công hồ sơ cho bệnh nhân **{patient_name}** vào hệ thống lịch sử!")
-    else:
-        st.info("👆 Vui lòng bấm chọn một vùng cơ thể ở phía trên để bắt đầu quy trình khám.")
-# ------------------------------------------
-# TAB 4: KHO BÀI TẬP PHCN CHUYÊN SÂU
-# ------------------------------------------
+
+# =========================================================
+# TAB 4: KHO BÀI TẬP PHCN (GIAO DIỆN LƯỚI & CHUYỂN CẢNH)
+# =========================================================
 with tab4:
     if "rehab_detail_page" not in st.session_state:
         st.session_state.rehab_detail_page = None
@@ -421,7 +439,7 @@ with tab4:
         st.subheader("🏋️‍♂️ Kho Bài tập Phục hồi chức năng Chuyên sâu")
         st.markdown("Chọn nhóm bệnh lý chuyên khoa bên dưới để xem chi tiết 7 bài tập chuẩn hóa:")
 
-        search_ex_kw = st.text_input("🔍 Tìm kiếm bài tập, động tác, hội chứng...", placeholder="Nhập từ khóa (Ví dụ: Vẹo cột sống, Đột quỵ...)", key="search_exercise_input")
+        search_ex_kw = st.text_input("🔍 Tìm kiếm bài tập, động tác, hội chứng...", placeholder="Nhập từ khóa...", key="search_exercise_input")
 
         st.markdown("---")
         st.markdown("##### 🗂️ Danh mục nhóm bệnh lý & Chuyên khoa PHCN")
@@ -550,14 +568,6 @@ with tab4:
         }
 
         current_exercises = exercises_db.get(group_name, [])
-
-       # for idx_ex, ex_item in enumerate(current_exercises):
-        #   title, purpose, technique, dosage = ex_item
-        #    with st.expander(f"🔹 {title}"):
-        #        st.markdown(f"- **🎯 Mục đích lâm sàng:** {purpose}")
-        #        st.markdown(f"- **⚙️ Hướng dẫn kỹ thuật:** {technique}")
-        #        st.markdown(f"- **⏱️ Liều lượng (Dosage):** {dosage}")
-         #       st.markdown("- **🛡️ Lưu ý an toàn:** Thực hiện đúng biên độ, dừng lại ngay khi xuất hiện cơn đau nhói hoặc chóng mặt.")
 
         for idx_ex, ex_item in enumerate(current_exercises):
             title, purpose, technique, dosage = ex_item
