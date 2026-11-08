@@ -492,6 +492,14 @@ with tab4:
 
         current_exercises = exercises_db.get(group_name, [])
 
+       # for idx_ex, ex_item in enumerate(current_exercises):
+        #   title, purpose, technique, dosage = ex_item
+        #    with st.expander(f"🔹 {title}"):
+        #        st.markdown(f"- **🎯 Mục đích lâm sàng:** {purpose}")
+        #        st.markdown(f"- **⚙️ Hướng dẫn kỹ thuật:** {technique}")
+        #        st.markdown(f"- **⏱️ Liều lượng (Dosage):** {dosage}")
+         #       st.markdown("- **🛡️ Lưu ý an toàn:** Thực hiện đúng biên độ, dừng lại ngay khi xuất hiện cơn đau nhói hoặc chóng mặt.")
+
         for idx_ex, ex_item in enumerate(current_exercises):
             title, purpose, technique, dosage = ex_item
             with st.expander(f"🔹 {title}"):
@@ -501,7 +509,6 @@ with tab4:
                 st.markdown("- **🛡️ Lưu ý an toàn:** Thực hiện đúng biên độ, dừng lại ngay khi xuất hiện cơn đau nhói hoặc chóng mặt.")
 
         st.markdown("---")
-                st.markdown("---")
         if st.button("⬅️ Quay lại danh mục nhóm bệnh lý", type="primary", key="bottom_back_rehab_btn"):
             st.session_state.rehab_detail_page = None
             st.rerun()
