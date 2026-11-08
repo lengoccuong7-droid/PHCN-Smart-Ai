@@ -1,20 +1,10 @@
+Đây là bản code tab 3 cũ rất rỗ ràng trong phân bố bố cục
 # =========================================================
-# TAB 3: KHÁM LÂM SÀNG CHUYÊN SÂU (TÍCH HỢP KHUNG CUỘN & ẢNH LÂM SÀNG)
+# TAB 3: KHÁM LÂM SÀNG CHUYÊN SÂU (TÍCH HỢP ẢNH LÂM SÀNG & TỜ GIẤY TRẮNG REAL-TIME)
 # =========================================================
 import streamlit as st
 
 def render(history_mgr):
-    # CSS tạo khung cuộn mượt mà cho trang chi tiết khám
-    st.markdown("""
-        <style>
-        .scrollable-exam-feed {
-            max-height: 800px;
-            overflow-y: auto;
-            padding-right: 12px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
     if "exam_active_region" not in st.session_state:
         st.session_state.exam_active_region = None
 
@@ -48,23 +38,17 @@ def render(history_mgr):
                         st.session_state.exam_active_region = title
                         st.rerun()
                         
-    # MÀN HÌNH 2: TRANG CHI TIẾT KHÁM CÓ KHUNG CUỘN DỌC
+    # MÀN HÌNH 2: TRANG CHI TIẾT KHÁM & TỜ GIẤY TRẮNG ĐỒNG BỘ THỜI GIAN THỰC
     else:
         current_reg = st.session_state.exam_active_region
 
-        c_top1, c_top2 = st.columns([1, 4])
-        with c_top1:
-            if st.button("⬅️ Quay lại", type="secondary", key="back_to_exam_grid"):
-                st.session_state.exam_active_region = None
-                st.rerun()
-        with c_top2:
-            st.subheader(f"📋 PHIẾU KHÁM LÂM SÀNG: {current_reg.upper()}")
+        if st.button("⬅️ Quay lại chọn vùng khám", type="secondary", key="back_to_exam_grid"):
+            st.session_state.exam_active_region = None
+            st.rerun()
 
         st.markdown("---")
+        st.subheader(f"📋 PHIẾU KHÁM LÂM SÀNG: {current_reg.upper()}")
         
-        # Bắt đầu bao bọc toàn bộ nội dung trong khung cuộn dọc
-        st.markdown('<div class="scrollable-exam-feed">', unsafe_allow_html=True)
-
         # Lấy dữ liệu hành chính tự động đồng bộ từ Tab 1
         active_patient = st.session_state.get("current_patient", {"name": "", "phone": "", "age": 1990, "job": ""})
         if active_patient.get("name"):
@@ -101,7 +85,7 @@ def render(history_mgr):
             palp = st.text_area("✋ SỜ (Palpation):", placeholder="Xác định điểm đau chói, trương lực cơ...", key="rt_palp")
             rom_meas = st.text_area("📏 ĐO / GÕ (ROM & Phản xạ):", placeholder="Tầm vận động khớp, lực cơ MMT, phản xạ gân xương...", key="rt_rom")
 
-        # 3. MỤC TẢI LÊN / CHỤP HÌNH ẢNH LÂM SÀNG
+        # 3. MỤC TẢI LÊN / CHỤP HÌNH ẢNH LÂM SÀNG (X-QUANG, TƯ THẾ, TỔN THƯƠNG)
         with st.expander("🖼️ 4. Hình ảnh Lâm sàng & Cận lâm sàng (X-quang, MRI, Dáng đi, Tư thế)", expanded=True):
             st.caption("Tải tệp ảnh có sẵn hoặc chụp hình trực tiếp từ máy tính/điện thoại:")
             
@@ -115,7 +99,7 @@ def render(history_mgr):
             if selected_img is not None:
                 st.image(selected_img, caption="🖼️ Hình ảnh lâm sàng được ghi nhận", use_container_width=True)
 
-        # 4. TEST ĐẶC HIỆU TỰ ĐỘNG THEO VÙNG
+        # 4. TEST ĐẶC HIỆU TỰ ĐỘNG THEO VÙNG (CÓ CÔNG DỤNG, KỸ THUẬT & NHẬP KẾT QUẢ)
         with st.expander(f"🧬 5. Nghiệm pháp / Test đặc hiệu chuyên khoa ({current_reg})", expanded=True):
             st.caption("Đánh giá các test lâm sàng đặc hiệu có sẵn cho vùng cơ thể này:")
 
@@ -242,6 +226,3 @@ def render(history_mgr):
                     }
                     history_mgr.save_visit(p_phone, visit_data)
                     st.success(f"✅ Đã lưu thành công hồ sơ cho bệnh nhân **{p_name}** vào hệ thống lịch sử!")
-
-        # Đóng khung cuộn dọc
-        st.markdown('</div>', unsafe_allow_html=True)
