@@ -1,22 +1,22 @@
 # =========================================================
-# HISTORY MANAGER: QUẢN LÝ LỊCH SỬ BỆNH ÁN (AN TOÀN TRÊN CLOUD)
+# HISTORY MANAGER: QUẢN LÝ LỊCH SỬ BỆNH ÁN (AN TOÀN TUYỆT ĐỐI TRÊN CLOUD)
 # =========================================================
 import os
 import json
 
 class HistoryManager:
     def __init__(self, history_file="patient_history.json"):
-        # Đảm bảo đường dẫn tệp nằm đúng trong thư mục làm việc hiện tại
-        self.history_file = os.path.abspath(history_file)
+        # Sử dụng thư mục /tmp/ trên Cloud để tránh lỗi phân quyền ghi tệp
+        if os.path.exists("/mount/src") or os.environ.get("STREAMLIT_SHARING_MODE"):
+            self.history_file = os.path.join("/tmp", history_file)
+        else:
+            self.history_file = os.path.abspath(history_file)
+            
         self.ensure_file()
 
     def ensure_file(self):
-        """Kiểm tra và tạo tệp lịch sử nếu chưa tồn tại"""
+        """Kiểm tra và tạo tệp lịch sử an toàn"""
         try:
-            directory = os.path.dirname(self.history_file)
-            if directory and not os.path.exists(directory):
-                os.makedirs(directory, exist_ok=True)
-                
             if not os.path.exists(self.history_file) or os.path.getsize(self.history_file) == 0:
                 with open(self.history_file, "w", encoding="utf-8") as f:
                     json.dump([], f, ensure_ascii=False, indent=4)
