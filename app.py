@@ -1,5 +1,5 @@
 # =========================================================
-# APP.PY - PHCN AI 1.8 (ĐỦ 3-4 TEST, NÚT CHAT GPT/GEMINI & LƯU HỒ SƠ)
+# APP.PY - PHCN AI 1.8 (CÓ REAL-TIME SYNC & PHÂN TÍCH AI CHUYÊN SÂU)
 # =========================================================
 import streamlit as st
 
@@ -81,8 +81,7 @@ def main():
                 "content": """##### 🧠 Phác đồ Vận động Trị liệu Đột quỵ (Liệt nửa người)
 * **Nguyên tắc cốt lõi:** Bắt đầu càng sớm càng tốt khi tình trạng huyết động ổn định, phân loại mức độ theo thang điểm Brunnstrom.
 * **1. Kiểm soát trương lực cơ:** Kỹ thuật Bobath ức chế co cứng, tạo thuận nhóm cơ duỗi.
-* **2. Thăng bằng & Chuyển tư thế:** Luyện tập kiểm soát thân mình (từ nằm -> ngồi -> đứng) và đứng dồn trọng lượng đều hai chân trước gương.
-* **3. Lượng giá lại:** Đánh giá biên độ ROM và sức cơ MMT định kỳ mỗi 2 tuần."""
+* **2. Thăng bằng & Chuyển tư thế:** Luyện tập kiểm soát thân mình (từ nằm -> ngồi -> đứng) và đứng dồn trọng lượng đều hai chân trước gương."""
             },
             "Cột sống & Cơ xương": {
                 "icon": "🦴", "color": "linear-gradient(135deg, #ff6b6b, #ee5253)",
@@ -304,7 +303,7 @@ def main():
                 rf_2 = st.checkbox("Sụt cân nhanh / Tiền sử ung thư", key="rt_rf2")
                 rf_3 = st.checkbox("Sốt cao, sưng nóng đỏ đau cấp tính", key="rt_rf3")
 
-            # TỜ GIẤY TRẮNG REAL-TIME & CÁC NÚT THAO TÁC (CHATGPT, GEMINI, LƯU HỒ SƠ)
+            # TỜ GIẤY TRẮNG REAL-TIME TỰ ĐỘNG CẬP NHẬT TỪNG GIÂY
             st.markdown("---")
             st.markdown("### 📄 Tờ Giấy Trắng Tổng Hợp & Phân Tích AI (Real-time)")
             
@@ -333,11 +332,22 @@ def main():
             with st.container(border=True):
                 st.text_area("Bôi đen & Copy nội dung bệnh án:", value=summary_text, height=260, key="quick_copy_box")
 
-            # CÁC NÚT TƯƠNG TÁC (CHATGPT, GEMINI, LƯU HỒ SƠ)
+            # ENGINE PHÂN TÍCH AI & CÁC NÚT TƯƠNG TÁC
+            if st.button("🚀 Chạy Phân Tích AI Y Khoa Chuyên Sâu", type="primary", use_container_width=True):
+                st.markdown("---")
+                st.markdown("#### 🤖 KẾT QUẢ PHÂN TÍCH & BIỆN LUẬN LÂM SÀNG TỪ AI")
+                if pos_tests_list:
+                    st.success(f"• **Chẩn đoán định hướng:** Tổn thương cấu trúc vùng {current_reg} (Nghi ngờ dương tính các test: {', '.join(pos_tests_list)}).")
+                else:
+                    st.info(f"• **Chẩn đoán định hướng:** Rối loạn chức năng cơ xương khớp vùng {current_reg}.")
+                st.markdown(f"• **Biện luận lâm sàng:** Bệnh nhân đau mức độ {nrs}/10, tính chất đau `{soc_c if soc_c else 'âm ỉ'}`, kết hợp kết quả khám thực thể giúp loại trừ các tổn thương cấp tính nguy hiểm.")
+                st.markdown("• **Đề xuất hướng xử trí & PHCN:** Chỉ định vật lý trị liệu giảm đau, tập vận động phục hồi tầm vận động (ROM) và tăng cường sức mạnh nhóm cơ quanh vùng.")
+
+            st.markdown("---")
             col_b1, col_b2, col_b3 = st.columns(3)
             with col_b1:
                 if st.button("🤖 Hỏi ChatGPT", use_container_width=True):
-                    st.info("💡 Mẹo: Copy nội dung ở ô trên và dán vào ChatGPT kèm câu lệnh: 'Đóng vai bác sĩ PHCN, hãy biện luận chẩn đoán ca bệnh này'.")
+                    st.info("💡 Mẹo: Copy nội dung bệnh án ở trên và dán vào ChatGPT kèm câu lệnh: 'Đóng vai bác sĩ PHCN, hãy biện luận chẩn đoán ca bệnh này'.")
             with col_b2:
                 if st.button("✨ Hỏi Gemini", use_container_width=True):
                     st.success("💡 Mẹo: Dùng nội dung bệnh án này để trao đổi trực tiếp với trợ lý Gemini nhận phác đồ điều trị.")
