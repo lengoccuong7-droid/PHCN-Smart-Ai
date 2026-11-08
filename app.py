@@ -1,5 +1,5 @@
 # =========================================================
-# APP.PY - PHCN AI 1.8 (PHIÊN BẢN LÂM SÀNG CHUYÊN SÂU HOÀN CHỈNH)
+# APP.PY - PHCN AI 1.8 (PHIÊN BẢN HOÀN CHỈNH - ĐÃ SỬA LỖI CÚ PHÁP)
 # =========================================================
 import streamlit as st
 
@@ -47,7 +47,7 @@ def main():
     
     # Khởi tạo kho lưu trữ bệnh nhân và lịch sử toàn cục trong session_state
     if "patient_db" not in st.session_state:
-        st.session_state.patient_db = {} # Key: SĐT, Value: {name, age, job, phone, history:[...]}
+        st.session_state.patient_db = {} 
     if "current_patient_phone" not in st.session_state:
         st.session_state.current_patient_phone = ""
 
@@ -127,7 +127,7 @@ def main():
                                 st.markdown(f"- Tóm tắt: {visit.get('summary_text')[:150]}...")
                                 st.markdown("---")
 
-    # ================= TAB 2: CẨM NANG TRI THỨC Y CHỨNG (CHI TIẾT ĐỊNH NGHĨA, CHỈ ĐỊNH, CHỐNG CHỈ ĐỊNH) =================
+    # ================= TAB 2: CẨM NANG TRI THỨC Y CHỨNG =================
     with tab2:
         if "knowledge_active_cat" not in st.session_state:
             st.session_state.knowledge_active_cat = None
@@ -432,15 +432,13 @@ II. DỮ LIỆU KHÁM & BỆNH SỬ LÂM SÀNG
 - Nghiệm pháp đặc hiệu (+): {', '.join(pos_tests_list) if pos_tests_list else 'Không có test nào dương tính'}
 - Cờ đỏ (Red Flags): {'CÓ DẤU HIỆU NGUY CƠ CAO' if (rf_1 or rf_2 or rf_3) else 'Không phát hiện bất thường'}"""
 
-            # Gán trực tiếp vào text_area để cập nhật theo thời gian thực từng giây
             st.text_area("Bôi đen & Copy nội dung bệnh án chuẩn hóa:", value=summary_text, height=300, key="quick_copy_box")
 
-            # ENGINE PHÂN TÍCH AI CHUYÊN SÂU (LIÊN KẾT TRIỆU CHỨNG, NRS VÀ TEST ĐẶC HIỆU)
+            # ENGINE PHÂN TÍCH AI CHUYÊN SÂU
             if st.button("🚀 Chạy Phân Tích AI Y Khoa Chuyên Sâu", type="primary", use_container_width=True):
                 st.markdown("---")
                 st.markdown("#### 🤖 KẾT QUẢ PHÂN TÍCH & LIỆT KÊ LIÊN KẾT CHUYÊN MÔN TỪ AI")
                 
-                # Thuật toán AI liên kết chuyên môn dựa trên triệu chứng, NRS và test
                 ai_diagnosis = f"Hội chứng đau & rối loạn chức năng vùng {current_reg}"
                 ai_mechanism = f"Bệnh nhân đau mức độ {nrs}/10, tính chất đau `{soc_c if soc_c else 'âm ỉ'}`."
                 if pos_tests_list:
@@ -459,7 +457,6 @@ II. DỮ LIỆU KHÁM & BỆNH SỬ LÂM SÀNG
             st.markdown("---")
             st.markdown("##### ⚡ Thao tác nhanh")
             
-            # 4 NÚT THAO TÁC CHIA LÀM 2 HÀNG - 2 CỘT
             row1_col1, row1_col2 = st.columns(2)
             with row1_col1:
                 if st.button("📋 Copy Nhanh Bệnh Án", use_container_width=True):
@@ -539,19 +536,19 @@ II. DỮ LIỆU KHÁM & BỆNH SỬ LÂM SÀNG
                 "6. **Kiểm soát cường độ giọng:** *Công dụng:* Tránh nói quá nhỏ hoặc quá to. *Kỹ thuật:* Luyện tập điều chỉnh âm lượng giọng nói trước máy đo.",
                 "7. **Luyện đọc trước gương:** *Công dụng:* Tự chỉnh sửa khẩu hình. *Kỹ thuật:* Đọc đoạn văn ngắn 5 dòng, quan sát khẩu hình miệng."
             ],
-            "5. Trẻ tự kỷ (Vận động & Cảm giác)": [
+            "5. Trẻ tự kỷ (Rối loạn vận động & cảm giác)": [
                 "1. **Điều hòa cảm giác tiền đình:** *Công dụng:* Giảm kích động, tăng tập trung. *Kỹ thuật:* Đung đưa nhịp nhàng trên võng hoặc nhún trên bóng lớn.",
                 "2. **Cảm giác bản thể (Deep Pressure):** *Công dụng:* Tạo cảm giác an toàn, giảm lo âu. *Kỹ thuật:* Ôm chặt, lăn cuộn em bé trong thảm bọt biển chuyên dụng.",
                 "3. **Vận động thô trên ván thăng bằng:** *Công dụng:* Phối hợp vận động hai bên cơ thể. *Kỹ thuật:* Cho trẻ đi dọc ván thăng bằng có hỗ trợ tay.",
                 "4. **Kéo giãn cơ cẳng chân:** *Công dụng:* Ngăn ngừa dáng đi nhón gót thường gặp ở trẻ tự kỷ. *Kỹ thuật:* Kéo giãn thụ động gân gót 15 giây/lần.",
                 "5. **Vận động tinh bàn tay:** *Công dụng:* Tăng sự khéo léo của các ngón tay. *Kỹ thuật:* Nhặt hạt cườm nhỏ, xếp hình khối gỗ.",
                 "6. **Phối hợp tay - mắt:** *Công dụng:* Tăng khả năng tập trung chú ý. *Kỹ thuật:* Ném bóng vào rổ theo hiệu lệnh màu sắc.",
-                "7. **Bắt chước tư thế động học:** *Công dụng:* Phát triển nhận thức cơ thể. *Kỹ thuật:* Trò chơi "làm theo chú khỉ" bắt chước các động tác tay chân."
+                "7. **Bắt chước tư thế động học:** *Công dụng:* Phát triển nhận thức cơ thể. *Kỹ thuật:* Trò chơi 'làm theo chú khỉ' bắt chước các động tác tay chân."
             ],
             "6. Xơ hóa cơ ức đòn chũm (Vẹo cổ bẩm sinh)": [
                 "1. **Kéo giãn thụ động cơ ức đòn chũm:** *Công dụng:* Làm mềm dải xơ, khôi phục tầm vận động cổ. *Kỹ thuật:* Nghiêng đầu trẻ sang bên lành, quay cằm về bên bệnh, giữ 10 giây.",
                 "2. **Kích thích quay đầu chủ động:** *Công dụng:* Tăng sức mạnh cơ cổ đối diện. *Kỹ thuật:* Dùng đồ chơi phát sáng đặt ở bên bệnh để trẻ tự quay đầu theo.",
-                "3. **Định hình tư thế nằm ngủ:** *Công dụng:* Ngừa vẹo cột sống cổ thứ phát. *Kỹ thuật:* Sử dụng gối chống lật giữ đầu ở vị trí trung tính.",
+                "3. **Định hình tư thế nằm ngủ:** *Công dụng:* Ng ngừa vẹo cột sống cổ thứ phát. *Kỹ thuật:* Sử dụng gối chống lật giữ đầu ở vị trí trung tính.",
                 "4. **Xoa bóp miết mô mềm:** *Công dụng:* Giải phóng mô dính xơ hóa. *Kỹ thuật:* Dùng đầu ngón cái day nhẹ dọc theo cơ ức đòn chũm.",
                 "5. **Vận động cổ qua trò chơi:** *Công dụng:* Duy trì biên độ linh hoạt. *Kỹ thuật:* Nhẹ nhàng quay cổ trẻ theo các hướng trong lúc tắm.",
                 "6. **Tăng sức mạnh cơ cổ đối diện:** *Công dụng:* Cân bằng lực kéo hai bên. *Kỹ thuật:* Đặt trẻ nằm sấp nâng đầu ngắn.",
@@ -573,7 +570,7 @@ II. DỮ LIỆU KHÁM & BỆNH SỬ LÂM SÀNG
                 "4. **Dang chân sang bên (Abduction):** *Công dụng:* Tăng sức mạnh cơ vùng hông. *Kỹ thuật:* Trượt chân sang ngang giữ thẳng gối, tránh tư thế khép.",
                 "5. **Đứng dậy từ ghế cao:** *Công dụng:* Phục hồi chức năng sinh hoạt cơ bản. *Kỹ thuật:* Dùng lực hai chân và tay vịn đứng lên từ ghế cao 50cm.",
                 "6. **Tái giáo dục dáng đi:** *Công dụng:* Chống đi khập khiễng. *Kỹ thuật:* Tập bước đi đều nhịp với khung hoặc nạng đúng kỹ thuật.",
-                "7. **Leo cầu thang đúng nguyên tắc:** *Công dụng:* Đảm bảo an toàn khớp háng nhân tạo. *Kỹ thuật:* "Lên trước bằng chân lành, xuống trước bằng chân mổ"."
+                "7. **Leo cầu thang đúng nguyên tắc:** *Công dụng:* Đảm bảo an toàn khớp háng nhân tạo. *Kỹ thuật:* 'Lên trước bằng chân lành, xuống trước bằng chân mổ'."
             ],
             "9. PHCN sau Gãy tay / Gãy chân (Hậu phẫu / Bó bột)": [
                 "1. **Gồng cơ tĩnh trong bột:** *Công dụng:* Ngừa teo cơ tối đa trong thời gian bất động. *Kỹ thuật:* Siết cơ bên trong lớp bột 10 giây, lặp lại 15 lần/buổi.",
