@@ -1,4 +1,4 @@
-# app.py
+# app.py - PHCN AI 1.8
 import streamlit as st
 import os
 import json
@@ -67,53 +67,80 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "3. Chọn vùng & Khám", 
     "4. Phục hồi chức năng"
 ])
-
 # ------------------------------------------
-# MỤC 1: HỒ SƠ BỆNH NHÂN & LỊCH SỬ
+# MỤC 1: HỒ SƠ BỆNH NHÂN & LỊCH SỬ (THẰNG SỐ 2)
 # ------------------------------------------
 with tab1:
     st.subheader("👤 Quản lý Hồ sơ & Lịch sử Bệnh nhân")
-    search_phone_input = st.text_input("🔍 Nhập số điện thoại / Mã BN tra cứu lịch sử:", placeholder="Ví dụ: 0901234567", key="search_history_phone")
+    st.markdown("Tra cứu nhanh thông tin hành chính và lịch sử thăm khám của bệnh nhân theo số điện thoại:")
+
+    # Ô nhập số điện thoại để tìm kiếm
+    search_phone_input = st.text_input("🔍 Nhập số điện thoại / Mã BN:", placeholder="Ví dụ: 0901234567", key="search_history_phone_m1")
     
     if search_phone_input:
+        # Gọi hàm lấy lịch sử từ history_mgr
         patient_history_list = history_mgr.get_patient_history(search_phone_input)
+        
         if patient_history_list:
-            st.success(f"Tìm thấy {len(patient_history_list)} lần khám.")
+            st.success(f"🎉 Đã tìm thấy {len(patient_history_list)} lần khám của bệnh nhân này.")
+            st.markdown("---")
             for idx, visit in enumerate(patient_history_list):
-                st.markdown(f"**Lần {idx+1} – Thời gian: {visit.get('date', 'N/A')}**")
-                st.write(f"• **Họ tên:** {visit.get('patient_name', 'N/A')}")
-                st.write(f"• **Tóm tắt:** {visit.get('summary', 'N/A')}")
-                st.markdown("---")
+                with st.expander(f"📁 Lần khám {idx+1} – Ngày: {visit.get('date', 'N/A')}", expanded=(idx == 0)):
+                    st.markdown(f"**• Họ tên bệnh nhân:** {visit.get('patient_name', 'N/A')}")
+                    st.markdown(f"**• Số điện thoại:** {visit.get('patient_phone', 'N/A')}")
+                    st.markdown(f"**• Tóm tắt bệnh án:** {visit.get('summary', 'N/A')}")
+                st.markdown("")
         else:
-            st.warning("⚠️ Không tìm thấy lịch sử khám với số điện thoại này.")
+            st.warning("⚠️ Không tìm thấy lịch sử khám nào tương ứng với số điện thoại này trong hệ thống.")
     else:
-        st.info("💡 Nhập số điện thoại ở trên để tra cứu thông tin hành chính và lịch sử các lần khám trước.")
-
+            st.info("💡 Hướng dẫn: Nhập số điện thoại của bệnh nhân vào ô phía trên để hệ thống tự động truy xuất toàn bộ lịch sử các lần khám trước.")
 # ------------------------------------------
-# MỤC 2: CƠ SỞ TRI THỨC LÂM SÀNG
+# MỤC 2: CƠ SỞ TRI THỨC LÂM SÀNG (THẰNG SỐ 3)
 # ------------------------------------------
 with tab2:
     st.subheader("📖 Cơ sở Tri thức Lâm sàng & Bệnh lý")
-    search_kw = st.text_input("🔍 Tìm kiếm kiến thức, bệnh lý...", placeholder="Nhập tên bệnh hoặc triệu chứng...")
-    
-    cols = st.columns(3)
-    regions = [
+    st.markdown("Tra cứu nhanh các tài liệu hướng dẫn và danh mục bệnh lý chuẩn hóa theo từng vùng cơ thể:")
+
+    # Ô tìm kiếm kiến thức nhanh
+    search_knowledge_kw = st.text_input("🔍 Tìm kiếm kiến thức, bệnh lý, triệu chứng...", placeholder="Nhập từ khóa cần tra cứu...", key="search_knowledge_input")
+
+    st.markdown("---")
+    st.markdown("##### 🗂️ Danh mục vùng cơ thể & Thần kinh")
+
+    # Chia các nút chọn vùng thành 3 cột đều nhau
+    col_k1, col_k2, col_k3 = st.columns(3)
+    knowledge_regions = [
         "Cột sống cổ", "Cột sống thắt lưng", "Khớp vai",
         "Khuỷu tay", "Cổ tay – bàn tay", "Khớp háng",
         "Khớp gối", "Cổ chân – bàn chân", "Thần kinh & Khác"
     ]
-    for idx, reg in enumerate(regions):
-        with cols[idx % 3]:
-            if st.button(f"📌 {reg}", use_container_width=True, key=f"knowledge_reg_{idx}"):
-                st.info(f"Đang hiển thị tài liệu hướng dẫn và danh mục bệnh lý cho vùng: **{reg}**")
+    
+    for idx, reg in enumerate(knowledge_regions):
+        col_target = [col_k1, col_k2, col_k3][idx % 3]
+        with col_target:
+            if st.button(f"📌 {reg}", use_container_width=True, key=f"btn_knowledge_reg_{idx}"):
+                st.session_state.selected_knowledge_region = reg
+
+    # Hiển thị nội dung tri thức tương ứng khi người dùng bấm chọn vùng
+    if "selected_knowledge_region" not in st.session_state:
+        st.session_state.selected_knowledge_region = None
+
+    if st.session_state.selected_knowledge_region:
+        st.markdown("---")
+        st.info(f"📂 Đang hiển thị tài liệu và danh mục bệnh lý cho vùng: **{st.session_state.selected_knowledge_region}**")
+        st.markdown(f"- **Tài liệu hướng dẫn chẩn đoán:** Cập nhật phác đồ chuẩn y khoa cho {st.session_state.selected_knowledge_region}.")
+        st.markdown(f"- **Danh mục bệnh lý thường gặp:** Liệt kê các hội chứng, tổn thương cấu trúc và chỉ định lượng giá.")
+        
+        if st.button("🔄 Đóng / Chọn vùng khác", key="reset_knowledge_reg"):
+            st.session_state.selected_knowledge_region = None
+            st.rerun()
 
     st.markdown("---")
-    st.markdown("##### 📚 Tài liệu tham khảo chuẩn y khoa")
-    st.caption("• Hướng dẫn chẩn đoán và điều trị phục hồi chức năng vận động.")
-    st.caption("• Cẩm nang nghiệm pháp đặc hiệu cơ xương khớp.")
-
+    st.markdown("##### 📚 Tài liệu tham khảo y khoa chuẩn hóa")
+    st.caption("• Hướng dẫn chẩn đoán và điều trị phục hồi chức năng vận động toàn diện.")
+    st.caption("• Cẩm nang nghiệm pháp đặc hiệu cơ xương khớp và thần kinh.")
 # ------------------------------------------
-# MỤC 3: CHỌN VÙNG & NHẬP LIỆU THĂM KHÁM
+# MỤC 3: CHỌN VÙNG & NHẬP LIỆU THĂM KHÁM (HOÀN THIỆN)
 # ------------------------------------------
 with tab3:
     st.subheader("🎯 Bước 1: Chọn vùng thăm khám lâm sàng")
@@ -123,15 +150,27 @@ with tab3:
         st.session_state.selected_region = None
 
     col_c1, col_c2, col_c3 = st.columns(3)
+    regions = [
+        "Cột sống cổ", "Cột sống thắt lưng", "Khớp vai",
+        "Khuỷu tay", "Cổ tay – bàn tay", "Khớp háng",
+        "Khớp gối", "Cổ chân – bàn chân", "Thần kinh & Khác"
+    ]
+    
     for idx, reg in enumerate(regions):
         col_target = [col_c1, col_c2, col_c3][idx % 3]
         with col_target:
             if st.button(f"📌 {reg}", use_container_width=True, key=f"btn_choose_reg_{idx}"):
                 st.session_state.selected_region = reg
+                # Reset lại dữ liệu form tạm khi đổi vùng khám mới
+                st.session_state.exam_data_cache = {}
 
     if st.session_state.selected_region:
         st.markdown("---")
         st.success(f"📍 Đang thực hiện khám cho vùng: **{st.session_state.selected_region}**")
+
+        # Khởi tạo kho lưu trữ tạm trong session_state nếu chưa có
+        if "exam_data_cache" not in st.session_state:
+            st.session_state.exam_data_cache = {}
 
         with st.form(key="independent_exam_form"):
             st.markdown("#### 📋 Bước 2: Nhập liệu thăm khám độc lập")
@@ -139,66 +178,90 @@ with tab3:
             # Thông tin hành chính
             col_p1, col_p2 = st.columns(2)
             with col_p1:
-                patient_name = st.text_input("Họ tên bệnh nhân:", placeholder="Nhập họ tên...")
-                patient_phone = st.text_input("Số điện thoại / Mã BN:", placeholder="Nhập SĐT...")
+                patient_name = st.text_input("Họ tên bệnh nhân:", value=st.session_state.exam_data_cache.get("patient_name", ""), placeholder="Nhập họ tên...")
+                patient_phone = st.text_input("Số điện thoại / Mã BN:", value=st.session_state.exam_data_cache.get("patient_phone", ""), placeholder="Nhập SĐT...")
             with col_p2:
-                patient_age = st.number_input("Năm sinh:", min_value=1900, max_value=2026, value=1990)
-                patient_job = st.text_input("Nghề nghiệp:", placeholder="Nhập nghề nghiệp...")
+                patient_age = st.number_input("Năm sinh:", min_value=1900, max_value=2026, value=st.session_state.exam_data_cache.get("patient_age", 1990))
+                patient_job = st.text_input("Nghề nghiệp:", value=st.session_state.exam_data_cache.get("patient_job", ""), placeholder="Nhập nghề nghiệp...")
 
             st.markdown("---")
-            ly_do_vao_vien = st.text_input("🏥 Lý do vào viện:", placeholder="Nhập lý do vào viện...")
-            tien_su = st.text_area("📜 Tiền sử bệnh (Bản thân / Gia đình):", placeholder="Nhập tiền sử...")
+            ly_do_vao_vien = st.text_input("🏥 Lý do vào viện:", value=st.session_state.exam_data_cache.get("ly_do_vao_vien", ""), placeholder="Nhập lý do vào viện...")
+            tien_su = st.text_area("📜 Tiền sử bệnh (Bản thân / Gia đình):", value=st.session_state.exam_data_cache.get("tien_su", ""), placeholder="Nhập tiền sử...")
 
             # Bệnh sử SOCRATES
             with st.expander("🩺 Bệnh sử (SOCRATES)", expanded=True):
                 site = st.text_input("S – Vị trí đau:", value=st.session_state.selected_region)
-                onset = st.text_input("O – Khởi phát:", placeholder="Hoàn cảnh khởi phát...")
-                character = st.text_input("C – Tính chất đau:", placeholder="Nhói, âm ỉ, tê bì...")
-                radiation = st.text_input("R – Hướng lan:", placeholder="Lan đi đâu...")
-                associations = st.text_input("A – Triệu chứng đi kèm:", placeholder="Yếu cơ, sưng nề...")
-                time_course = st.text_input("T – Diễn tiến:", placeholder="Tăng về đêm, liên tục...")
+                onset = st.text_input("O – Khởi phát:", value=st.session_state.exam_data_cache.get("onset", ""), placeholder="Hoàn cảnh khởi phát...")
+                character = st.text_input("C – Tính chất đau:", value=st.session_state.exam_data_cache.get("character", ""), placeholder="Nhói, âm ỉ, tê bì...")
+                radiation = st.text_input("R – Hướng lan:", value=st.session_state.exam_data_cache.get("radiation", ""), placeholder="Lan đi đâu...")
+                associations = st.text_input("A – Triệu chứng đi kèm:", value=st.session_state.exam_data_cache.get("associations", ""), placeholder="Yếu cơ, sưng nề...")
+                time_course = st.text_input("T – Diễn tiến:", value=st.session_state.exam_data_cache.get("time_course", ""), placeholder="Tăng về đêm, liên tục...")
                 
                 col_nrs1, col_nrs2 = st.columns([1, 2])
                 with col_nrs1:
-                    nrs_score = st.selectbox("Điểm NRS (0-10):", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+                    nrs_score = st.selectbox("Điểm NRS (0-10):", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], index=st.session_state.exam_data_cache.get("nrs_score", 0))
                 with col_nrs2:
-                    nrs_note = st.text_input("Ghi chú mức độ đau:", placeholder="Mô tả thêm...")
+                    nrs_note = st.text_input("Ghi chú mức độ đau:", value=st.session_state.exam_data_cache.get("nrs_note", ""), placeholder="Mô tả thêm...")
 
             # Khám thực thể tinh gọn (Nhìn - Sờ - Gõ)
             with st.expander("🔍 Khám thực thể (Nhìn - Sờ - Gõ)", expanded=True):
-                inspect_note = st.text_input("👁️ Nhìn (Inspection):", placeholder="Biến dạng, sưng nề, lệch vẹo...")
-                palp_note = st.text_input("✋ Sờ (Palpation):", placeholder="Điểm đau, nhiệt độ da, trương lực...")
-                per_meas_note = st.text_input("📏 Gõ / Đo (Percussion):", placeholder="Tầm vận động ROM, phản xạ...")
+                inspect_note = st.text_input("👁️ Nhìn (Inspection):", value=st.session_state.exam_data_cache.get("inspect_note", ""), placeholder="Biến dạng, sưng nề, lệch vẹo...")
+                palp_note = st.text_input("✋ Sờ (Palpation):", value=st.session_state.exam_data_cache.get("palp_note", ""), placeholder="Điểm đau, nhiệt độ da, trương lực...")
+                per_meas_note = st.text_input("📏 Gõ / Đo (Percussion):", value=st.session_state.exam_data_cache.get("per_meas_note", ""), placeholder="Tầm vận động ROM, phản xạ...")
 
             # 3-4 Test đặc hiệu
             with st.expander("👤 3-4 Test đặc hiệu / Nghiệm pháp", expanded=True):
-                t1 = st.checkbox("Test đặc hiệu 1 (+ Dương tính)")
-                t2 = st.checkbox("Test đặc hiệu 2 (+ Dương tính)")
-                t3 = st.checkbox("Test đặc hiệu 3 (+ Dương tính)")
-                test_note = st.text_input("Ghi chú thêm về test lâm sàng:", placeholder="Mô tả kết quả nghiệm pháp...")
+                t1 = st.checkbox("Test đặc hiệu 1 (+ Dương tính)", value=st.session_state.exam_data_cache.get("t1", False))
+                t2 = st.checkbox("Test đặc hiệu 2 (+ Dương tính)", value=st.session_state.exam_data_cache.get("t2", False))
+                t3 = st.checkbox("Test đặc hiệu 3 (+ Dương tính)", value=st.session_state.exam_data_cache.get("t3", False))
+                test_note = st.text_input("Ghi chú thêm về test lâm sàng:", value=st.session_state.exam_data_cache.get("test_note", ""), placeholder="Mô tả kết quả nghiệm pháp...")
 
             # Cờ đỏ an toàn & Tệp đính kèm
             with st.expander("🚩 Cờ đỏ an toàn & Tệp đính kèm"):
-                rf_1 = st.checkbox("Hội chứng đuôi ngựa / Rối loạn tiểu tiện")
-                rf_2 = st.checkbox("Sụt cân / Nghi ngờ ác tính")
+                rf_1 = st.checkbox("Hội chứng đuôi ngựa / Rối loạn tiểu tiện", value=st.session_state.exam_data_cache.get("rf_1", False))
+                rf_2 = st.checkbox("Sụt cân / Nghi ngờ ác tính", value=st.session_state.exam_data_cache.get("rf_2", False))
                 uploaded_files = st.file_uploader("Tải lên hình ảnh / X-quang / MRI:", accept_multiple_files=True, type=["jpg", "png", "pdf"])
 
-            submitted = st.form_submit_button("🚀 Xác nhận & Sẵn sàng Phân tích AI", use_container_width=True)
+            submitted = st.form_submit_button("🚀 Xác nhận & Lưu dữ liệu tạm", use_container_width=True)
             if submitted:
-                st.success("✅ Đã ghi nhận thông tin thăm khám!")
+                # Lưu toàn bộ vào session_state cache để đồng bộ hiển thị sang phần phân tích bên dưới
+                st.session_state.exam_data_cache = {
+                    "patient_name": patient_name,
+                    "patient_phone": patient_phone,
+                    "patient_age": patient_age,
+                    "patient_job": patient_job,
+                    "ly_do_vao_vien": ly_do_vao_vien,
+                    "tien_su": tien_su,
+                    "onset": onset,
+                    "character": character,
+                    "radiation": radiation,
+                    "associations": associations,
+                    "time_course": time_course,
+                    "nrs_score": nrs_score,
+                    "nrs_note": nrs_note,
+                    "inspect_note": inspect_note,
+                    "palp_note": palp_note,
+                    "per_meas_note": per_meas_note,
+                    "t1": t1, "t2": t2, "t3": t3,
+                    "test_note": test_note,
+                    "rf_1": rf_1, "rf_2": rf_2
+                }
+                st.success("✅ Đã ghi nhận và cập nhật thông tin thăm khám thành công!")
 
-        # Phân tích chẩn đoán & PHCN AI
+        # Phân tích chẩn đoán & PHCN AI (Đọc dữ liệu an toàn từ cache)
+        cached_data = st.session_state.get("exam_data_cache", {})
+        
         st.markdown("---")
         st.markdown("### 🧠 Phân tích chẩn đoán & PHCN AI")
         
         col_sum1, col_sum2 = st.columns(2)
         with col_sum1:
             st.markdown("##### 📋 Tổng hợp dữ liệu")
-            st.markdown(f"✔️ **Bệnh nhân:** {patient_name if 'patient_name' in locals() and patient_name else '---'}")
+            st.markdown(f"✔️ **Bệnh nhân:** {cached_data.get('patient_name', '---')}")
             st.markdown(f"✔️ **Vùng khám:** {st.session_state.selected_region}")
-            st.markdown(f"✔️ **Tiền sử:** {tien_su if 'tien_su' in locals() and tien_su else 'Không ghi nhận'}")
-            st.markdown(f"✔️ **Lý do NV:** {ly_do_vao_vien if 'ly_do_vao_vien' in locals() and ly_do_vao_vien else '---'}")
-            st.markdown(f"✔️ **Đau (NRS):** {nrs_score if 'nrs_score' in locals() else 0}/10")
+            st.markdown(f"✔️ **Tiền sử:** {cached_data.get('tien_su', 'Không ghi nhận')}")
+            st.markdown(f"✔️ **Lý do NV:** {cached_data.get('ly_do_vao_vien', '---')}")
+            st.markdown(f"✔️ **Đau (NRS):** {cached_data.get('nrs_score', 0)}/10")
         
         with col_sum2:
             st.markdown("##### 📄 Kết quả phân tích AI")
@@ -216,343 +279,167 @@ with tab3:
             st.button("🟣 Gemini", use_container_width=True)
 
         st.markdown("---")
-        if st.button("💾 Lưu hồ sơ bệnh án vào hệ thống", type="primary", use_container_width=True):
-            if not ('patient_name' in locals() and patient_name and 'patient_phone' in locals() and patient_phone):
-                st.warning("⚠️ Vui lòng điền đầy đủ Họ tên và SĐT ở form trên để lưu trữ!")
+        if st.button("💾 Lưu hồ sơ bệnh án vào hệ thống lịch sử", type="primary", use_container_width=True):
+            p_name = cached_data.get("patient_name", "")
+            p_phone = cached_data.get("patient_phone", "")
+            if not (p_name and p_phone):
+                st.warning("⚠️ Vui lòng điền đầy đủ Họ tên và SĐT ở form phía trên rồi bấm 'Xác nhận & Lưu dữ liệu tạm' trước khi lưu vào hệ thống!")
             else:
-                exam_summary = f"Vùng: {st.session_state.selected_region} | Lý do: {ly_do_vao_vien} | NRS: {nrs_score}/10"
-                exam_data = {
-                    "patient_name": patient_name,
-                    "patient_phone": patient_phone,
+                exam_summary = f"Vùng: {st.session_state.selected_region} | Lý do: {cached_data.get('ly_do_vao_vien', '')} | NRS: {cached_data.get('nrs_score', 0)}/10"
+                visit_data = {
+                    "patient_name": p_name,
+                    "patient_phone": p_phone,
                     "summary": exam_summary
                 }
-                history_mgr.save_visit(patient_phone, exam_data)
-                st.success(f"✅ Đã lưu thành công hồ sơ cho bệnh nhân **{patient_name}** vào hệ thống lịch sử!")
+                history_mgr.save_visit(p_phone, visit_data)
+                st.success(f"✅ Đã lưu thành công hồ sơ cho bệnh nhân **{p_name}** vào hệ thống lịch sử!")
     else:
         st.info("👆 Vui lòng bấm chọn một vùng cơ thể ở phía trên để bắt đầu quy trình khám.")
-
 # ------------------------------------------
-# MỤC 4: KHO BÀI TẬP PHỤC HỒI CHỨC NĂNG
+# MỤC 4: KHO BÀI TẬP PHCN CHUYÊN SÂU (THẰNG SỐ 5 - CHI TIẾT 7 BÀI TẬP)
 # ------------------------------------------
+with tab4:
+    st.subheader("🏋️‍♂️ Kho Bài tập Phục hồi chức năng Chuyên sâu")
+    st.markdown("Tra cứu danh mục 9 nhóm bệnh lý chuyên khoa và hệ thống 7 bài tập chuẩn hóa lâm sàng cho từng nhóm:")
 
-else:
-    st.subheader("🏋️‍♂️ Thư viện Chi tiết Bài Tập Phục Hồi Chức Năng Chuyên Sâu")
-    st.markdown("Chọn chương trình PHCN dưới đây để xem **hướng dẫn thao tác, tư thế và liều lượng chi tiết**:")
-
-    rehab_program = st.selectbox("🎯 Chọn chương trình Phục hồi chức năng:", [
-        "1. PHCN sau tai biến mạch máu não (Liệt nửa người)",
-        "2. PHCN hội chứng cong vẹo cột sống cổ / Cổ vai gáy",
-        "3. PHCN cho trẻ bại não (Cerebral Palsy)",
-        "4. PHCN sau mổ tái tạo dây chằng chéo trước (ACL)",
-        "5. PHCN sau mổ kết hợp xương gãy thân xương đùi",
-        "6. PHCN sau mổ gãy xương cổ tay / bàn tay",
-        "7. PHCN sau phẫu thuật thay khớp háng toàn phần",
-        "8. PHCN cho trẻ chậm nói / Rối loạn phát triển ngôn ngữ"
-    ])
+    # Ô tìm kiếm bài tập nhanh
+    search_ex_kw = st.text_input("🔍 Tìm kiếm bài tập, động tác, hội chứng...", placeholder="Nhập từ khóa (Ví dụ: Vẹo cột sống, Đột quỵ, Nuốt khó...)", key="search_exercise_input")
 
     st.markdown("---")
+    st.markdown("##### 🗂️ Chọn nhóm bệnh lý & Chuyên khoa PHCN")
 
-    if "1." in rehab_program:
-        st.subheader("🧠 1. Chương trình PHCN sau tai biến mạch máu não")
-        st.write("• **Mục tiêu:** Phòng ngừa co cứng, kích hoạt lại vận động bên liệt và phục hồi thăng bằng.")
+    # Chia các nút chọn nhóm bệnh lý thành 3 cột đều nhau
+    col_e1, col_e2, col_e3 = st.columns(3)
+    rehab_groups = [
+        "Stroke (Đột quỵ)", 
+        "Dysphagia (Nuốt khó)", 
+        "Aphasia (Thất ngôn)",
+        "Dysarthria (Khó nói)", 
+        "Autism / Motor (Tự kỷ / VĐ)", 
+        "Torticollis (Vẹo cổ)",
+        "Vẹo cột sống (Scoliosis)", 
+        "Post-Op Knee / Hip (Mổ)", 
+        "Fracture (Gãy xương)"
+    ]
+    
+    for idx, grp in enumerate(rehab_groups):
+        col_target = [col_e1, col_e2, col_e3][idx % 3]
+        with col_target:
+            if st.button(f"📌 {grp}", use_container_width=True, key=f"btn_rehab_group_{idx}"):
+                st.session_state.selected_rehab_group = grp
+
+    # Khởi tạo session state cho nhóm bài tập
+    if "selected_rehab_group" not in st.session_state:
+        st.session_state.selected_rehab_group = None
+
+    if st.session_state.selected_rehab_group:
         st.markdown("---")
-        st.markdown("##### 1. Vận động thụ động - chủ động hỗ trợ khớp vai và khuỷu tay bên liệt")
-        st.write("- **Tư thế:** Bệnh nhân nằm ngửa hoặc ngồi ghế tựa.")
-        st.write("- **Cách thực hiện:** Kỹ thuật viên hoặc tay lành hỗ trợ đưa tay liệt lên cao, dạng vai, gập khuỷu nhẹ nhàng.")
-        st.write("- **Liều lượng:** 10–15 lần/hiệp, ngày tập 2–3 lần.")
+        group_name = st.session_state.selected_rehab_group
+        st.success(f"📂 Danh mục 7 bài tập chuẩn hóa chuyên sâu cho nhóm: **{group_name}**")
 
-        st.markdown("##### 2. Kỹ thuật ức chế trương lực cơ co cứng cơ gấp cổ tay và ngón tay")
-        st.write("- **Tư thế:** Bệnh nhân ngồi, tay đặt ngửa trên bàn.")
-        st.write("- **Cách thực hiện:** Thực hiện duỗi nhẹ nhàng các ngón tay và khớp cổ tay ra hết biên độ, giữ kéo giãn tĩnh.")
-        st.write("- **Liều lượng:** Giữ 30 giây/lần, lặp lại 5 lần.")
+        # Định nghĩa cơ sở dữ liệu 7 bài tập chi tiết cho từng nhóm bệnh lý
+        exercises_db = {
+            "Stroke (Đột quỵ)": [
+                ("1. Tập vận động thụ động khớp vai bên liệt", "Duy trì tầm vận động, ngăn ngừa cứng khớp.", "Thực hiện nhẹ nhàng, chậm rãi từng biên độ khớp.", "3 sets x 10 lần/bên"),
+                ("2. Kỹ thuật ức chế thần kinh cơ (PNF) chi trên", "Tăng cường nhận cảm bản thể và kích hoạt cơ yếu.", "Kết hợp kháng trở nhẹ theo đường chéo thần kinh cơ.", "3 sets x 8 lần"),
+                ("3. Bài tập cầu nối (Bridging) vùng chậu", "Tăng sức mạnh cơ mông và cơ thân mình.", "Nằm ngửa, gối gập, nâng hông khỏi mặt giường giữ 5 giây.", "3 sets x 10 lần"),
+                ("4. Tập đứng dồn trọng lượng hai chân", "Cải thiện thăng bằng đứng và khả năng chịu lực bên liệt.", "Đứng trước gương, phân phối đều lực qua hai bàn chân.", "3 phút x 2 lần"),
+                ("5. Bài tập bước đi tại chỗ có hỗ trợ", "Phục hồi pha đứng và pha lăng trong chu kỳ dáng đi.", "Nhấc cao gối từng bên, giữ nhịp độ đều đặn.", "2 sets x 20 bước"),
+                ("6. Tập kiểm soát trương lực cơ bàn tay", "Giảm co cứng các ngón tay bên liệt.", "Duỗi thụ động từng ngón kết hợp xoa bóp nhẹ nhàng.", "5 phút/lần"),
+                ("7. Vận động chức năng sinh hoạt hàng ngày (ADL)", "Tái rèn luyện kỹ năng cầm nắm ly nước, thìa đũa.", "Thực hiện động tác mô phỏng có kiểm soát.", "10-15 phút")
+            ],
+            "Dysphagia (Nuốt khó)": [
+                ("1. Bài tập Masako (Kỹ thuật giữ lưỡi)", "Tăng cường sức mạnh cơ thành sau họng.", "Đặt đầu lưỡi giữa hai hàm răng, nuốt nước bọt nhẹ nhàng.", "10 lần/lượt x 3 lượt"),
+                ("2. Bài tập Shaker (Nâng đầu)", "Tăng độ mở cơ thắt thực quản trên.", "Nằm ngửa, nâng đầu nhìn ngón chân không nhấc vai, giữ 60 giây.", "3 lần lặp lại"),
+                ("3. Kỹ thuật nuốt Mendelsohn", "Kéo dài thời gian mở cơ thắt thực quản trên.", "Đặt ngón tay lên sụn giáp, cảm nhận và giữ cơ nâng lên khi nuốt.", "5-10 lần nuốt"),
+                ("4. Vận động cơ môi và má", "Cải thiện độ khép môi, tránh trào ngược chất lỏng.", "Mím môi chặt, thổi hơi má phồng luân phiên trái phải.", "3 sets x 10 lần"),
+                ("5. Kích thích nhiệt - cảm giác vùng miệng họng", "Kích thích phản xạ nuốt nguyên phát.", "Dùng gương soi kết hợp que đè lưỡi lạnh chạm nhẹ cung khẩu cái.", "2 phút/lần"),
+                ("6. Bài tập phát âm nguyên âm mạnh (A-I-U)", "Tăng sự linh hoạt cơ thanh quản và vòm miệng.", "Phát âm kéo dài các âm nguyên âm với âm lượng vừa phải.", "2 sets x 10 lần"),
+                ("7. Tập nuốt với thể tích tăng dần", "Thích nghi an toàn với các độ đặc thức ăn khác nhau.", "Bắt đầu từ nước sệt, cháo loãng đến cơm mềm dưới giám sát.", "Theo chỉ định lâm sàng")
+            ],
+            "Aphasia (Thất ngôn)": [
+                ("1. Kỹ thuật kích thích thính giác đơn giản", "Cải thiện khả năng hiểu ngôn ngữ nói.", "Nghe và chỉ tay vào đồ vật quen thuộc theo mệnh lệnh.", "5-10 phút"),
+                ("2. Bài tập điền vào chỗ trống (Sentence completion)", "Kích hoạt phản xạ ngôn ngữ tự động.", "Bác sĩ nói nửa câu, bệnh nhân hoàn thành từ cuối.", "10 từ/lần"),
+                ("3. Gọi tên đồ vật qua hình ảnh (Naming therapy)", "Phục hồi khả năng biểu đạt từ vựng.", "Nhìn thẻ hình ảnh (Flashcard) và phát âm tên đồ vật.", "3 sets x 5 hình"),
+                ("4. Bài tập diễn đạt ý muốn cơ bản (Yes/No)", "Thiết lập giao tiếp tối thiểu cho bệnh nhân.", "Trả lời các câu hỏi đóng bằng lời nói hoặc cử chỉ gật/lắc.", "10 câu hỏi"),
+                ("5. Kỹ thuật luyện phát âm giai điệu (MIT)", "Tận dụng bán cầu não phải để hỗ trợ ngôn ngữ.", "Hát theo giai điệu đơn giản các từ ngữ giao tiếp hàng ngày.", "5 phút/lần"),
+                ("6. Đọc hiểu đoạn văn bản ngắn", "Duy trì khả năng đọc hiểu chữ viết.", "Đọc thầm và trả lời câu hỏi trắc nghiệm đơn giản.", "1 bài/ngày"),
+                ("7. Giao tiếp tương tác nhóm thực tế", "Giảm cảm giác tự ti, tăng tương tác xã hội.", "Trao đổi hội thoại ngắn về chủ đề gia đình, thời tiết.", "15 phút")
+            ],
+            "Dysarthria (Khó nói)": [
+                ("1. Bài tập thở hoành (Diaphragmatic breathing)", "Kiểm soát cột hơi hỗ trợ phát âm rõ ràng.", "Hít sâu bằng mũi phình bụng, thở ra từ từ qua miệng.", "3 sets x 10 hơi"),
+                ("2. Kỹ thuật giãn cơ môi và lưỡi", "Giảm độ cứng cơ quan phát âm.", "Lè lưỡi tối đa ra trước, sang trái, sang phải.", "3 sets x 5 lần"),
+                ("3. Luyện phát âm phụ âm tắc (P-T-K)", "Cải thiện độ rõ của âm tiết và sức bật môi lưỡi.", "Phát âm dứt khoát các âm đơn lẻ liên tục.", "2 sets x 10 lần"),
+                ("4. Điều chỉnh tốc độ nói (Pacing board)", "Giảm tốc độ nói để tăng độ rõ.", "Chạm vào từng ô trên bảng tương ứng với từng âm tiết.", "5 phút"),
+                ("5. Luyện tập ngữ điệu và trọng âm", "Tránh giọng nói đơn điệu, đều đều.", "Nhấn mạnh các từ khóa trong câu giao tiếp ngắn.", "10 câu/lần"),
+                ("6. Tập phát âm có kiểm soát âm lượng", "Tăng cường sức mạnh cơ hô hấp - phát âm.", "Phát âm từ thì thầm đến to rõ dần mà không hét.", "3 sets x 5 lần"),
+                ("7. Đọc đoạn văn kiểm soát nhịp thở", "Tăng độ bền cơ quan phát âm trong hội thoại.", "Đọc câu dài, ngắt nghỉ đúng dấu câu và nhịp thở.", "3 lần đọc")
+            ],
+            "Autism / Motor (Tự kỷ / VĐ)": [
+                ("1. Bài tập điều hòa cảm giác tiền đình", "Cải thiện khả năng cân bằng và định vị không gian.", "Đu đưa nhẹ trên bóng tập lớn (Gymball).", "5 phút/lần"),
+                ("2. Vận động thô: Bò trườn bắt chéo chi", "Kích thích sự phối hợp vận động hai bán cầu đại liga.", "Bò trên sàn đồng bộ tay trái chân phải và ngược lại.", "2 sets x 10 mét"),
+                ("3. Bài tập phối hợp tay mắt với bóng lớn", "Tăng khả năng tập trung và phản xạ vận động.", "Lăn hoặc ném bắt bóng qua lại ở khoảng cách gần.", "3 sets x 10 lần"),
+                ("4. Nhảy lò cò vượt chướng ngại vật thấp", "Phát triển sức mạnh cơ chi dưới và thăng bằng động.", "Bước qua các vạch kẻ sẵn trên sàn theo nhịp đếm.", "2 sets x 5 nhịp"),
+                ("5. Bài tập giữ thăng bằng trên ván nhún", "Kiểm soát trương lực tư thế tĩnh và động.", "Đứng vững trên bề mặt không ổn định trong 30 giây.", "3 lần"),
+                ("6. Kỹ thuật vận động tinh bằng xếp hình / hạt", "Cải thiện sự khéo léo của đôi bàn tay.", "Nhặt các hạt nhỏ hoặc xếp khối gỗ theo mẫu.", "10 phút"),
+                ("7. Bài tập điều hòa nhịp thở thư giãn", "Giảm kích thích quá mức, ổn định hành vi.", "Nằm nghe nhạc nhẹ kết hợp hít thở sâu cùng kỹ thuật viên.", "5 phút")
+            ],
+            "Torticollis (Vẹo cổ)": [
+                ("1. Kéo giãn thụ động cơ ức đòn chũm (SCM)", "Làm mềm và kéo dài cơ bị co rút.", "Nghiêng đầu sang bên lành, xoay cằm về bên bệnh.", "3 sets x 15 giây"),
+                ("2. Bài tập vận động chủ động quay đầu", "Tăng tầm vận động xoay cổ hai bên.", "Khuyến khích trẻ/bệnh nhân quay đầu theo tiếng động/đồ chơi.", "3 sets x 10 lần"),
+                ("3. Tập mạnh cơ bên đối diện (Cơ nghiêng cổ)", "Cân bằng lực cơ hai bên cột sống cổ.", "Nghiêng đầu chống lại kháng trở nhẹ của tay.", "3 sets x 8 lần"),
+                ("4. Kỹ thuật đặt tư thế nằm sấp có kiểm soát (Tummy time)", "Tăng cường cơ vùng cổ và vai gáy.", "Cho nằm sấp dưới sự giám sát khi tỉnh táo.", "5 phút x 3 lần/ngày"),
+                ("5. Bài tập vươn cổ chỉnh hình tư thế", "Cải thiện đường cong sinh lý cột sống cổ.", "Kéo dài trục cổ hướng lên trần nhà, thu cằm (Chin tuck).", "3 sets x 10 lần"),
+                ("6. Xoa bóp mềm cơ co thắt vùng cổ", "Giảm đau và tăng tuần hoàn máu tại chỗ.", "Day ấn nhẹ nhàng dọc theo chiều bám của cơ ức đòn chũm.", "3 phút"),
+                ("7. Định hướng tư thế đối xứng khi sinh hoạt", "Ngăn ngừa tái phát lệch vẹo tư thế.", "Điều chỉnh góc nhìn, ánh sáng và vị trí nằm giường.", "Duy trì hàng ngày")
+            ],
+            "Vẹo cột sống (Scoliosis)": [
+                ("1. Đánh giá góc Cobb & Kiểm tra nghiệm pháp Adams", "Lượng giá mức độ gù vẹo và xoay đốt sống.", "Cúi gập người phía trước kiểm tra bướu sườn.", "Thực hiện định kỳ"),
+                ("2. Kỹ thuật thở ba chiều (Schroth breathing method)", "Mở rộng lồng ngực ở phíamỏm lõm của đường cong.", "Hít sâu đưa hơi thở vào vùng lồng ngực bị lõm.", "3 sets x 10 nhịp thở"),
+                ("3. Kéo giãn cơ bên lõm / Tăng cường cơ bên lồi", "Lấy lại cân bằng lực cơ hai bên cột sống.", "Nghiêng lườn sang bên lõm kết hợp kéo tay tương ứng.", "3 sets x 10 lần"),
+                ("4. Bài tập ổn định cơ lõi (Core stabilization)", "Tăng cường sức mạnh hệ cơ bám cột sống.", "Tư thế tấm ván (Plank) hoặc cầu nối tiểu chuẩn.", "3 sets x 30 giây"),
+                ("5. Bài tập điều chỉnh tư thế đứng và ngồi đối xứng", "Tạo nếp ý thức giữ thẳng cột sống qua gương.", "Kiểm soát vai và chậu hai bên cân bằng trước gương lớn.", "5 phút x 2 lần"),
+                ("6. Kéo giãn cột sống nhẹ nhàng tư thế nằm / treo xà", "Giảm áp lực đĩa đệm và giãn cơ cạnh sống.", "Treo xà đơn thả lỏng hoặc nằm ngửa kéo giãn tự nhiên.", "3 sets x 20 giây"),
+                ("7. Hướng dẫn bài tập tự tập duy trì tại nhà", "Phòng ngừa tiến triển góc vẹo cột sống.", "Thực hiện chuỗi bài tập Schroth rút gọn hàng ngày.", "Duy trì đều đặn")
+            ],
+            "Post-Op Knee / Hip (Mổ)": [
+                ("1. Gồng cơ tứ đầu đùi (Isometric quadriceps)", "Ngăn ngừa teo cơ và kích hoạt lại cơ đùi sau mổ.", "Nằm thẳng, ép sát khoeo chân xuống mặt giường.", "3 sets x 15 lần (giữ 5s)"),
+                ("2. Kéo gót chân trên mặt giường (Heel slides)", "Cải thiện tầm vận động gấp gối / hông.", "Trượt gót chân lại gần mông trong giới hạn đau cho phép.", "3 sets x 10 lần"),
+                ("3. Nhấc chân thẳng lên cao (Straight leg raise)", "Tăng sức mạnh cơ tứ đầu và cơ gập hông.", "Duỗi thẳng gối, nhấc chân cách mặt giường 15cm.", "3 sets x 10 lần"),
+                ("4. Tập duỗi gối thụ động hết biên độ", "Ngăn ngừa co rút bao khớp gối.", "Kê gót chân lên cao, để trọng lực ép gối thẳng tự nhiên.", "3 phút x 2 lần"),
+                ("5. Bài tập đứng dồn trọng lượng hai chân đều", "Tập làm quen lại với lực ép khớp sau phẫu thuật.", "Đứng bám song vị trí an toàn, dồn lực 50-50.", "2 phút"),
+                ("6. Tập đi với dụng cụ hỗ trợ (Nạng / Khung tập đi)", "Phục hồi dáng đi chuẩn trong giai đoạn đầu.", "Tuân thủ mức độ chịu lực (Partial/Full weight bearing).", "Theo phác đồ"),
+                ("7. Tập đi cầu thang bước từng bậc", "Tái hòa nhập vận động sinh hoạt phức tạp.", "Lên bằng chân lành, xuống bằng chân mổ (Up with the good, down with the bad).", "10-15 bậc")
+            ],
+            "Fracture (Gãy xương)": [
+                ("1. Vận động chủ động các khớp lân cận ổ gãy", "Duy trì tầm vận động, chống cứng khớp và phù nề.", "Cử động nhẹ nhàng ngón chân/cổ chân khi gãy cẳng chân.", "3 sets x 10 lần"),
+                ("2. Gồng cơ tĩnh vùng xung quanh ổ gãy", "Duy trì khối cơ, kích hoạt tuần hoàn giảm teo cơ.", "Gồng cơ ngắt quãng dưới lớp bột/nẹp cố định.", "3 sets x 10 lần (giữ 5s)"),
+                ("3. Bài tập nâng cao chi thể phòng phù nề", "Hỗ trợ hệ bạch huyết hồi lưu máu tĩnh mạch.", "Kê cao chân/tay gãy trên mức tim khi nằm nghỉ.", "Nhiều lần trong ngày"),
+                ("4. Kỹ thuật đi trọng lượng tăng dần sau tháo bột", "Phục hồi khả năng chịu lực của xương và khớp.", "Sử dụng nạng hỗ trợ tăng dần lực tì đè theo y lệnh.", "Theo giai đoạn liền xương"),
+                ("5. Tái dung nạp tầm vận động ROM khớp đích", "Khôi phục biên độ vận động sau thời gian bất động.", "Tập gấp duỗi tự do có hỗ trợ nhiệt ấm trước khi tập.", "2 sets x 10 lần"),
+                ("6. Tăng cường sức mạnh cơ bắp toàn chi", "Lấy lại sức mạnh cơ lực sau giai đoạn teo cơ.", "Sử dụng tạ nhẹ hoặc dây kháng lực đàn hồi phù hợp.", "3 sets x 10 lần"),
+                ("7. Huấn luyện lại dáng đi và thăng bằng cơ thể", "Đảm bảo an toàn, tránh té ngã tái phát gãy xương.", "Đi đường thẳng, bước qua chướng ngại vật thấp.", "10-15 phút")
+            ]
+        }
 
-        st.markdown("##### 3. Tập nâng hông (Bridging) ở tư thế nằm ngửa")
-        st.write("- **Tư thế:** Nằm ngửa, gập gối, hai bàn chân đặt sát mặt giường.")
-        st.write("- **Cách thực hiện:** Dồn lực vào hai gót chân và cơ mông, nâng hông lên khỏi mặt giường sao cho thân người tạo thành một đường thẳng.")
-        st.write("- **Liều lượng:** 10 lần/hiệp, 3 hiệp/ngày.")
+        # Lấy danh sách 7 bài tập tương ứng với nhóm đã chọn
+        current_exercises = exercises_db.get(group_name, [])
 
-        st.markdown("##### 4. Tập thăng bằng ngồi trên ghế không tựa lưng")
-        st.write("- **Tư thế:** Ngồi thẳng lưng trên ghế, hai chân chống vuông góc xuống sàn.")
-        st.write("- **Cách thực hiện:** Bỏ tay vịn, giữ thăng bằng thân mình, tập với tay sang các hướng trái/phải/trước mà không ngã.")
-        st.write("- **Liều lượng:** Duy trì liên tục từ 3–5 phút/lần.")
+        for idx_ex, ex_item in enumerate(current_exercises):
+            title, purpose, technique, dosage = ex_item
+            with st.expander(f"🔹 {title}"):
+                st.markdown(f"- **🎯 Mục đích lâm sàng:** {purpose}")
+                st.markdown(f"- **⚙️ Hướng dẫn kỹ thuật:** {technique}")
+                st.markdown(f"- **⏱️ Liều lượng (Dosage):** {dosage}")
+                st.markdown("- **🛡️ Lưu ý an toàn:** Thực hiện đúng biên độ, dừng lại ngay khi xuất hiện cơn đau nhói hoặc chóng mặt.")
 
-        st.markdown("##### 5. Bài tập đứng dồn lực lên chân liệt trước gương")
-        st.write("- **Tư thế:** Đứng đối diện gương lớn, hai chân rộng bằng vai.")
-        st.write("- **Cách thực hiện:** Chuyển trọng tâm cơ thể từ từ sang bên chân liệt, quan sát trong gương để giữ hông cân đối.")
-        st.write("- **Liều lượng:** Giữ 10–15 giây/lần, lặp lại 10 lần.")
-
-        st.markdown("##### 6. Huấn luyện lại dáng đi với thanh song song / khung tập đi")
-        st.write("- **Tư thế:** Đứng vững trong khung tập đi hoặc thanh song song.")
-        st.write("- **Cách thực hiện:** Bước chân liệt lên trước, theo sau là chân lành, chú ý dáng đi đúng nhịp.")
-        st.write("- **Liều lượng:** Tập đi từ 5–10 phút mỗi buổi.")
-
-        st.markdown("##### 7. Tập cầm nắm vật dụng sinh hoạt hàng ngày")
-        st.write("- **Tư thế:** Ngồi bàn ghế thoải mái.")
-        st.write("- **Cách thực hiện:** Tập cầm các vật có kích thước khác nhau (quả bóng mềm, ly nước nhựa, bút) để tái giáo dục chi trên.")
-        st.write("- **Liều lượng:** 10–15 phút/lần.")
-
-    elif "2." in rehab_program:
-        st.subheader("🦴 2. Chương trình PHCN cong vẹo cột sống cổ / Cổ vai gáy")
-        st.write("• **Mục tiêu:** Thư giãn nhóm cơ co thắt, mạnh cơ cổ sâu, chỉnh sửa tư thế đầu.")
         st.markdown("---")
-        st.markdown("##### 1. Kéo giãn cơ thang trên (Upper Trapezius Stretch)")
-        st.write("- **Tư thế:** Ngồi thẳng, một tay ôm vòng qua đầu kéo nghiêng đầu về phía đối diện.")
-        st.write("- **Cách thực hiện:** Kéo nhẹ nhàng cho đến khi có cảm giác căng tức vùng cổ vai bên đối diện.")
-        st.write("- **Liều lượng:** Giữ 20–30 giây, lặp lại 3–5 lần mỗi bên.")
+        if st.button("🔄 Chọn nhóm bệnh lý khác", key="reset_rehab_group"):
+            st.session_state.selected_rehab_group = None
+            st.rerun()
 
-        st.markdown("##### 2. Kéo giãn cơ nâng vai (Levator Scapulae Stretch)")
-        st.write("- **Tư thế:** Ngồi ghế, xoay đầu sang một góc 45 độ rồi cuối cằm nhìn xuống nách.")
-        st.write("- **Cách thực hiện:** Dùng tay cùng phía ấn nhẹ đầu xuống dưới để tăng độ căng.")
-        st.write("- **Liều lượng:** Giữ 20–30 giây, lặp lại 3 lần/bên.")
+    else:
+        st.info("👆 Vui lòng bấm chọn một nhóm bệnh lý / chuyên khoa ở phía trên để hiển thị chi tiết 7 bài tập chuẩn hóa.")
 
-        st.markdown("##### 3. Kéo cằm ngược (Chin Tuck)")
-        st.write("- **Tư thế:** Ngồi hoặc đứng thẳng, mắt nhìn thẳng phía trước.")
-        st.write("- **Cách thực hiện:** Kéo cằm lùi thẳng ra sau (tạo nọng cằm giả) mà không cúi đầu xuống, cảm nhận cơ cổ sâu phía sau căng nhẹ.")
-        st.write("- **Liều lượng:** 10 lần/hiệp, giữ 5 giây mỗi lần.")
-
-        st.markdown("##### 4. Xoay cổ chủ động biên độ nhẹ")
-        st.write("- **Tư thế:** Ngồi thoải mái, thả lỏng vai.")
-        st.write("- **Cách thực hiện:** Từ từ xoay đầu sang trái rồi sang phải trong giới hạn không đau.")
-        st.write("- **Liều lượng:** 10 vòng mỗi hướng.")
-
-        st.markdown("##### 5. Tập mạnh cơ duỗi cổ kháng lực đẳng cự")
-        st.write("- **Tư thế:** Đặt hai tay đan vào nhau sau chẩm đầu.")
-        st.write("- **Cách thực hiện:** Dùng đầu đẩy ngược ra sau đồng thời hai tay kháng lực lại (đầu không di chuyển).")
-        st.write("- **Liều lượng:** Giữ 5–10 giây, lặp lại 10 lần.")
-
-        st.markdown("##### 6. Vận động khép xương bả vai (Scapular Retraction)")
-        st.write("- **Tư thế:** Ngồi thẳng lưng, hai tay thả lỏng.")
-        st.write("- **Cách thực hiện:** Kéo hai xương bả vai sát lại với nhau ra phía sau như kẹp một vật ở giữa.")
-        st.write("- **Liều lượng:** Giữ 5 giây, lặp lại 15 lần.")
-
-        st.markdown("##### 7. Nhiệt trị liệu & Thư giãn điểm đau (Trigger points)")
-        st.write("- **Tư thế:** Nằm sấp hoặc ngồi tựa đầu thư giãn.")
-        st.write("- **Cách thực hiện:** Chườm ấm vùng cổ vai gáy kết hợp xoa bóp nhẹ nhàng các điểm cơ co cứng.")
-        st.write("- **Liều lượng:** 15–20 phút/lần.")
-
-    elif "3." in rehab_program:
-        st.subheader("🧸 3. Chương trình PHCN cho trẻ bại não (Cerebral Palsy)")
-        st.write("• **Mục tiêu:** Ức chế phản xạ nguyên bản bất thường, tăng cường kiểm soát đầu cổ.")
-        st.markdown("---")
-        st.markdown("##### 1. Tạo thuận kiểm soát đầu cổ")
-        st.write("- **Tư thế:** Trẻ nằm sấp trên thảm có cuộn khăn dưới ngực.")
-        st.write("- **Cách thực hiện:** Kích thích âm thanh hoặc đồ chơi phía trước để trẻ ngẩng đầu lên.")
-        st.write("- **Liều lượng:** 5–10 lần/buổi.")
-
-        st.markdown("##### 2. Tập tư thế nằm sấp chống khuỷu (Prone on elbows)")
-        st.write("- **Tư thế:** Trẻ nằm sấp, hai khuỷu tay chống vuông góc nâng thân trên lên.")
-        st.write("- **Cách thực hiện:** Giữ ổn định tư thế vai và cột sống cổ của trẻ.")
-        st.write("- **Liều lượng:** 3–5 phút mỗi lần tập.")
-
-        st.markdown("##### 3. Tập quỳ bốn điểm và nhún trọng lượng (Quadruped rocking)")
-        st.write("- **Tư thế:** Trẻ ở tư thế bò bốn điểm (hai tay và hai gối chống sàn).")
-        st.write("- **Cách thực hiện:** Hỗ trợ nhún người trẻ nhẹ nhàng ra trước và ra sau để tăng cảm giác thăng bằng.")
-        st.write("- **Liều lượng:** 10–15 nhịp/lần.")
-
-        st.markdown("##### 4. Tập phản ứng thăng bằng trên bóng Bobath")
-        st.write("- **Tư thế:** Cho trẻ ngồi hoặc nằm sấp trên bóng trị liệu lớn.")
-        st.write("- **Cách thực hiện:** Lăn bóng nhẹ nhàng các hướng trước-sau, trái-phải để kích thích phản xạ giữ thăng bằng.")
-        st.write("- **Liều lượng:** 5–7 phút.")
-
-        st.markdown("##### 5. Kéo giãn nhẹ nhàng cơ khép háng và gân kheo")
-        st.write("- **Tư thế:** Trẻ nằm ngửa trên giường.")
-        st.write("- **Cách thực hiện:** Từ từ dạng chân hoặc duỗi thẳng gối kéo giãn nhẹ nhóm cơ căng cứng.")
-        st.write("- **Liều lượng:** Giữ 15–20 giây, lặp lại 3 lần.")
-
-        st.markdown("##### 6. Hướng dẫn tập đứng với nẹp trợ giúp AFO")
-        st.write("- **Tư thế:** Mang nẹp chân cho trẻ và đỡ đứng thẳng.")
-        st.write("- **Cách thực hiện:** Cho trẻ tập đứng bám vào bàn hoặc khung tập đứng.")
-        st.write("- **Liều lượng:** 5–10 phút.")
-
-        st.markdown("##### 7. Trị liệu vận động tinh qua trò chơi")
-        st.write("- **Tư thế:** Ngồi bàn ghế chắc chắn.")
-        st.write("- **Cách thực hiện:** Hướng dẫn trẻ nhặt khối gỗ nhỏ, xâu hạt vòng để luyện cơ bàn tay và ngón tay.")
-        st.write("- **Liều lượng:** 10–15 phút.")
-
-    elif "4." in rehab_program:
-        st.subheader("🦵 4. Chương trình PHCN sau mổ tái tạo dây chằng chéo trước (ACL)")
-        st.write("• **Mục tiêu:** Lấy lại biên độ duỗi thẳng hoàn toàn, phục hồi cơ tứ đầu đùi.")
-        st.markdown("---")
-        st.markdown("##### 1. Duỗi gối thụ động tối đa")
-        st.write("- **Tư thế:** Nằm ngửa, gót chân kê cao trên con lăn, để chân tự duỗi thẳng hoàn toàn dưới trọng lực.")
-        st.write("- **Liều lượng:** 10–15 phút, ngày 3 lần.")
-
-        st.markdown("##### 2. Gồng cơ tứ đầu đùi tĩnh (Isometric Quad Sets)")
-        st.write("- **Tư thế:** Nằm ngửa, chân duỗi thẳng, đặt một khăn mỏng dưới khoeo.")
-        st.write("- **Cách thực hiện:** Ép sát khoeo chân xuống khăn, gồng căng cơ đùi hết cỡ.")
-        st.write("- **Liều lượng:** Giữ 10 giây, lặp lại 15–20 lần.")
-
-        st.markdown("##### 3. Nâng chân thẳng (Straight Leg Raise)")
-        st.write("- **Tư thế:** Nằm ngửa, chân mổ duỗi thẳng, chân kia gập gối.")
-        st.write("- **Cách thực hiện:** Gồng cơ đùi, nhấc thẳng chân lên cao cách mặt giường khoảng 20-30cm rồi hạ xuống từ từ.")
-        st.write("- **Liều lượng:** 3 hiệp x 12 lần.")
-
-        st.markdown("##### 4. Gập gối gót chạm mông chủ động trợ giúp")
-        st.write("- **Tư thế:** Nằm ngửa hoặc ngồi trên mép giường.")
-        st.write("- **Cách thực hiện:** Dùng chân lành hỗ trợ kéo hoặc trượt gót chân mổ về phía mông để tăng biên độ gập gối.")
-        st.write("- **Liều lượng:** 10–15 lần/hiệp.")
-
-        st.markdown("##### 5. Đạp xe đạp tĩnh điện không kháng lực")
-        st.write("- **Tư thế:** Ngồi trên xe đạp tập, yên chỉnh độ cao phù hợp.")
-        st.write("- **Cách thực hiện:** Đạp vòng tròn nhẹ nhàng không để mức kháng lực (thường áp dụng từ tuần 4-6 sau mổ).")
-        st.write("- **Liều lượng:** 10–15 phút/ngày.")
-
-        st.markdown("##### 6. Ngồi xổm một phần (Mini Squats)")
-        st.write("- **Tư thế:** Đứng thẳng, hai chân rộng bằng vai, bám nhẹ vào thanh vịn.")
-        st.write("- **Cách thực hiện:** Từ từ hạ thấp người xuống ở biên độ an toàn từ 0 đến 45 độ gối rồi đứng lên.")
-        st.write("- **Liều lượng:** 3 hiệp x 10 lần.")
-
-        st.markdown("##### 7. Tập thăng bằng cảm giác bản thể trên đệm hơi")
-        st.write("- **Tư thế:** Đứng bằng chân mổ trên đệm hơi hoặc thảm thăng bằng.")
-        st.write("- **Cách thực hiện:** Giữ thăng bằng cơ thể không để chân bị chao đảo.")
-        st.write("- **Liều lượng:** 3 lần x 1 phút.")
-
-    elif "5." in rehab_program:
-        st.subheader("🦴 5. Chương trình PHCN sau mổ kết hợp xương gãy thân xương đùi")
-        st.write("• **Mục tiêu:** Ngăn ngừa teo cơ, chống huyết khối tĩnh mạch, hồi phục chức năng gối.")
-        st.markdown("---")
-        st.markdown("##### 1. Bơm máu cổ chân")
-        st.write("- **Tư thế:** Nằm ngửa, chân duỗi thẳng.")
-        st.write("- **Cách thực hiện:** Gập duỗi liên tục hai bàn chân lên xuống nhịp nhàng.")
-        st.write("- **Liều lượng:** 20–30 lần mỗi giờ để phòng huyết khối.")
-
-        st.markdown("##### 2. Gồng cơ mông và đùi tĩnh")
-        st.write("- **Tư thế:** Nằm ngửa.")
-        st.write("- **Cách thực hiện:** Siết chặt cơ mông và cơ đùi trong vòng 5 giây rồi thả lỏng.")
-        st.write("- **Liều lượng:** 15 lần/hiệp, 3 hiệp/ngày.")
-
-        st.markdown("##### 3. Trượt gót chân trên giường (Heel Slides)")
-        st.write("- **Tư thế:** Nằm ngửa.")
-        st.write("- **Cách thực hiện:** Từ từ kéo gót chân trượt về phía mông để gập gối trong giới hạn cho phép của bác sĩ phẫu thuật.")
-        st.write("- **Liều lượng:** 10 lần/hiệp.")
-
-        st.markdown("##### 4. Nâng chân thẳng")
-        st.write("- **Tư thế:** Nằm ngửa.")
-        st.write("- **Cách thực hiện:** Nâng nguyên chân lên cao 20cm khỏi mặt giường với đầu gối duỗi thẳng hoàn toàn.")
-        st.write("- **Liều lượng:** 10 lần/hiệp.")
-
-        st.markdown("##### 5. Ngồi thõng chân mép giường")
-        st.write("- **Tư thế:** Ngồi ở mép giường, cẳng chân buông thõng tự nhiên.")
-        st.write("- **Cách thực hiện:** Đung đưa nhẹ nhàng cẳng chân để lấy lại tầm vận động gối.")
-        st.write("- **Liều lượng:** 5–10 phút/lần.")
-
-        st.markdown("##### 6. Tập đứng chịu lực một phần với khung tập đi")
-        st.write("- **Tư thế:** Đứng dậy bằng khung tập đi theo đúng chỉ định chịu lực (chịu lực một phần chân mổ).")
-        st.write("- **Liều lượng:** 5–10 phút.")
-
-        st.markdown("##### 7. Tập bước đi lên xuống bậc thang thấp")
-        st.write("- **Tư thế:** Giai đoạn liền xương, tập bước bậc thang thấp (Lên bằng chân lành, xuống bằng chân mổ).")
-        st.write("- **Liều lượng:** 5–10 nhịp.")
-
-    elif "6." in rehab_program:
-        st.subheader("✋ 6. Chương trình PHCN sau mổ gãy xương cổ tay / bàn tay")
-        st.write("• **Mục tiêu:** Chống phù nề, chống xơ hóa gân, lấy lại tầm vận động và lực nắm.")
-        st.markdown("---")
-        st.markdown("##### 1. Kê cao tay & nắm xòe ngón tay")
-        st.write("- **Tư thế:** Ngồi hoặc nằm, tay bị thương kê cao hơn mức tim.")
-        st.write("- **Cách thực hiện:** Liên tục nắm chặt và xòe rộng các ngón tay để bơm máu tĩnh mạch giảm sưng.")
-        st.write("- **Liều lượng:** 15–20 lần mỗi giờ.")
-
-        st.markdown("##### 2. Vận động thụ động nhẹ nhàng khớp cổ tay")
-        st.write("- **Tư thế:** Ngồi thoải mái, tay lành hỗ trợ tay mổ.")
-        st.write("- **Cách thực hiện:** Nhẹ nhàng gập và duỗi cổ tay trong giới hạn không đau đớn.")
-        st.write("- **Liều lượng:** 10 lần/hiệp, ngày 3 lần.")
-
-        st.markdown("##### 3. Vận động chủ động nghiêng quay / nghiêng trụ")
-        st.write("- **Tư thế:** Đặt cẳng tay cạnh sườn, bàn tay trung gian.")
-        st.write("- **Cách thực hiện:** Chủ động lắc cổ tay sang hai bên (hướng ngón cái và hướng ngón út).")
-        st.write("- **Liều lượng:** 10 lần mỗi hướng.")
-
-        st.markdown("##### 4. Tập mạnh cơ ngửa và sấp cẳng tay")
-        st.write("- **Tư thế:** Khuỷu tay gập 90 độ sát thân người.")
-        st.write("- **Cách thực hiện:** Xoay lật lòng bàn tay ngửa lên và sấp xuống với kháng lực nhẹ.")
-        st.write("- **Liều lượng:** 12 lần/hiệp.")
-
-        st.markdown("##### 5. Bóp bóng cao su mềm")
-        st.write("- **Tư thế:** Ngồi cầm quả bóng cao su mềm trong lòng bàn tay.")
-        st.write("- **Cách thực hiện:** Dùng toàn bộ ngón tay bóp chặt bóng lại rồi thả lỏng từ từ.")
-        st.write("- **Liều lượng:** 15 lần/hiệp, 3 hiệp/ngày.")
-
-        st.markdown("##### 6. Bài tập đối chiếu ngón cái")
-        st.write("- **Tư thế:** Ngồi thả lỏng tay.")
-        st.write("- **Cách thực hiện:** Dùng đầu ngón cái lần lượt chạm vào đầu các ngón tay 2, 3, 4, 5.")
-        st.write("- **Liều lượng:** Lặp lại 5 vòng.")
-
-        st.markdown("##### 7. Siêu âm trị liệu chống dính sẹo")
-        st.write("- **Tư thế:** Đặt tay thoải mái trên bàn điều trị.")
-        st.write("- **Cách thực hiện:** Chạy máy siêu âm hoặc xoa bóp nhẹ nhàng dọc theo đường mổ để làm mềm và chống dính mô sẹo.")
-        st.write("- **Liều lượng:** 5–7 phút mỗi ngày.")
-
-    elif "7." in rehab_program:
-        st.subheader("🦴 7. Chương trình PHCN sau phẫu thuật thay khớp háng toàn phần")
-        st.write("• **Mục tiêu:** Bảo vệ khớp nhân tạo, phục hồi cơ mông, hướng dẫn sinh hoạt an toàn.")
-        st.markdown("---")
-        st.markdown("##### 1. Bơm máu bàn chân")
-        st.write("- **Tư thế:** Nằm ngửa, hai chân duỗi thẳng.")
-        st.write("- **Cách thực hiện:** Gập và duỗi cổ chân liên tục để tăng tuần hoàn máu.")
-        st.write("- **Liều lượng:** 20 lần/giờ.")
-
-        st.markdown("##### 2. Ép mông tĩnh (Gluteal Squeezes)")
-        st.write("- **Tư thế:** Nằm ngửa.")
-        st.write("- **Cách thực hiện:** Siết chặt hai cơ mông lại với nhau, giữ nguyên trong 5 giây.")
-        st.write("- **Liều lượng:** 15 lần/hiệp.")
-
-        st.markdown("##### 3. Dạng chân trượt sang ngang")
-        st.write("- **Tư thế:** Nằm ngửa, chân duỗi thẳng.")
-        st.write("- **Cách thực hiện:** Từ từ trượt chân mổ sang ngang ra phía ngoài rồi kéo về giữa (tuân thủ không dạng quá mức).")
-        st.write("- **Liều lượng:** 10 lần/hiệp.")
-
-        st.markdown("##### 4. Trượt gót chân gập háng nhẹ")
-        st.write("- **Tư thế:** Nằm ngửa.")
-        st.write("- **Cách thực hiện:** Trượt gót chân gập háng và gối nhẹ nhàng (lưu ý tuyệt đối không gập háng quá 90 độ).")
-        st.write("- **Liều lượng:** 10 lần/hiệp.")
-
-        st.markdown("##### 5. Nâng chân thẳng ở tư thế nằm ngửa")
-        st.write("- **Tư thế:** Nằm ngửa.")
-        st.write("- **Cách thực hiện:** Gồng cơ đùi và nâng chân lên khỏi mặt giường khoảng 15cm.")
-        st.write("- **Liều lượng:** 10 lần/hiệp.")
-
-        st.markdown("##### 6. Tập đứng dồn lực đều hai chân với khung")
-        st.write("- **Tư thế:** Đứng thẳng bằng khung tập đi.")
-        st.write("- **Cách thực hiện:** Phân bổ trọng lượng cơ thể đều hai bên chân dưới sự giám sát.")
-        st.write("- **Liều lượng:** 5–10 phút.")
-
-        st.markdown("##### 7. Hướng dẫn tư thế sinh hoạt an toàn")
-        st.write("- **Lưu ý:** Không bắt chéo chân khi nằm hoặc ngồi, không cúi gập người quá 90 độ, luôn dùng ghế cao khi ngồi vệ sinh.")
-
-    elif "8." in rehab_program:
-        st.subheader("🗣️ 8. Chương trình PHCN cho trẻ chậm nói / Rối loạn phát triển ngôn ngữ")
-        st.write("• **Mục tiêu:** Kích thích cơ quan phát âm, mở rộng vốn từ vựng tiếp nhận.")
-        st.markdown("---")
-        st.markdown("##### 1. Massage kích thích cơ vùng miệng - môi - má")
-        st.write("- **Tư thế:** Trẻ ngồi thoải mái trước mặt kỹ thuật viên hoặc phụ huynh.")
-        st.write("- **Cách thực hiện:** Dùng tay sạch massage nhẹ nhàng xung quanh môi, má và vùng cơ quanh miệng để tăng cảm giác.")
-        st.write("- **Liều lượng:** 3–5 phút.")
-
-        st.markdown("##### 2. Tập thổi hơi có mục đích")
-        st.write("- **Tư thế:** Ngồi bàn ghế ngay ngắn.")
-        st.write("- **Cách thực hiện:** Cho trẻ tập thổi bóng bông trên bàn, thổi còi nhựa hoặc thổi tắt nến ở khoảng cách gần.")
-        st.write("- **Liều lượng:** 5–10 lần thổi mỗi buổi.")
-
-        st.markdown("##### 3. Giao tiếp mắt 1 kèm 1 với Flashcard")
-        st.write("- **Tư thế:** Ngồi đối diện trẻ ở cự ly gần.")
-        st.write("- **Cách thực hiện:** Đưa thẻ hình con vật, đồ vật màu sắc sinh động ngang tầm mắt, yêu cầu trẻ nhìn thẳng vào mắt người dạy và phát âm theo.")
-        st.write("- **Liều lượng:** 10 phút.")
-
-        st.markdown("##### 4. Bắt chước âm thanh gần gũi")
-        st.write("- **Tư thế:** Ngồi chơi đùa tương tác.")
-        st.write("- **Cách thực hiện:** Phát ra các âm thanh đơn giản (tiếng kêu động vật: meo meo, gâu gâu, ò í e) và khuyến khích trẻ bắt chước.")
-        st.write("- **Liều lượng:** 5–10 phút.")
-
-        st.markdown("##### 5. Đọc to từ đơn tiết kèm vật thật")
-        st.write("- **Tư thế:** Tương tác trực tiếp với đồ vật thực tế (quả táo, quả bóng).")
-        st.write("- **Cách thực hiện:** Cầm đồ vật, gọi rõ tên từng từ đơn chậm rãi, rõ khẩu hình miệng.")
-        st.write("- **Liều lượng:** 10 phút.")
-
-        st.markdown("##### 6. Hát bài hát thiếu nhi có động tác")
-        st.write("- **Tư thế:** Vui chơi vận động.")
-        st.write("- **Cách thực hiện:** Hát các bài hát thiếu nhi quen thuộc kèm theo các động tác múa tay chân minh họa để kích thích ngôn ngữ qua nhịp điệu.")
-        st.write("- **Liều lượng:** 10–15 phút.")
-
-        st.markdown("##### 7. Hướng dẫn phụ huynh tương tác mở rộng tại nhà")
-        st.write("- **Nội dung:** Dặn dò bố mẹ luôn giao tiếp, gọi tên sự vật xung quanh bé mọi lúc mọi nơi trong sinh hoạt hàng ngày, hạn chế tối đa thời gian xem tivi/điện thoại.")
+    st.markdown("---")
+    st.caption("💡 Hệ thống dữ liệu bài tập PHCN được chuẩn hóa chuyên sâu theo y học chứng cứ phục hồi chức năng vận động và chỉnh hình.")
