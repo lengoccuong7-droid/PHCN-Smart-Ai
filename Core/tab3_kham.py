@@ -96,6 +96,9 @@ def render_tab3():
             summary_text = f"""[BỆNH ÁN PHCN]
 - Vùng: {st.session_state.get('exam_active_region', '---')}
 - Bệnh nhân: {st.session_state.get('rt_p_name', '---')} ({st.session_state.get('rt_p_phone', '---')})
-- Đau NRS: {st.session_state.get('rt_nrs', 0)}/10"""
+- Đau NRS: {st.session_state.get('rt_nrs', 0)}/10
+- Triệu chứng: {st.session_state.get('rt_symptoms', '---')}
+- Test: {st.session_state.get('rt_test', '---')}
+- ROM: {st.session_state.get('rt_rom', '---')}"""
             with st.container(border=True):
                 st.text_area("Bôi đen & Copy nội dung:", value=summary_text, height=220, key="quick_copy_box")
