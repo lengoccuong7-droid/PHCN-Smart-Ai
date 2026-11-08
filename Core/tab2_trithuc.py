@@ -1,95 +1,92 @@
-# =========================================================
-# TAB 2: CẨM NANG TRI THỨC Y HỌC CHỨNG CỨ
-# =========================================================
 import streamlit as st
 
-def render(history_mgr=None):
-    st.markdown("""
-        <style>
-        .grid-card-box {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 14px 8px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border: 1px solid #eaeaea;
-            margin-bottom: 10px;
-        }
-        .icon-circle-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            margin: 0 auto 8px auto;
-            color: white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        .scrollable-content {
-            max-height: 750px;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+def render():
+    if "kb_detail_page" not in st.session_state:
+        st.session_state.kb_detail_page = None
 
-    if "knowledge_active_cat" not in st.session_state:
-        st.session_state.knowledge_active_cat = None
+    if st.session_state.kb_detail_page is None:
+        st.subheader("📖 Cẩm nang Tri thức & Phác đồ Lâm sàng")
+        st.markdown("Chọn một chuyên khoa bên dưới để xem tài liệu chi tiết:")
 
-    knowledge_db = {
-        "Đột quỵ & Thần kinh": {
-            "icon": "🧠", "color": "linear-gradient(135deg, #48dbfb, #0abde3)",
-            "content": "Phác đồ vận động trị liệu sớm cho bệnh nhân đột quỵ:\n- Đánh giá giai đoạn co cứng theo Brunnstrom.\n- Áp dụng kỹ thuật ức chế trương lực cơ Bobath.\n- Lượng giá thăng bằng thân mình và bài tập chuyển đổi tư thế."
-        },
-        "Cột sống & Cơ xương": {
-            "icon": "🦴", "color": "linear-gradient(135deg, #ff6b6b, #ee5253)",
-            "content": "Nguyên tắc điều trị hội chứng thắt lưng hông & cột sống cổ:\n- Kiểm soát đau cấp tính bằng phương pháp giảm áp và tư thế đúng.\n- Bài tập kéo giãn nhóm cơ dựng sống và tăng cường cơ lõi (Core stability)."
-        },
-        "Khớp ngoại biên": {
-            "icon": "🦾", "color": "linear-gradient(135deg, #10ac84, #1dd1a1)",
-            "content": "Phục hồi chức năng sau tổn thương khớp (Vai, gối, khuỷu):\n- Duy trì và gia tăng tầm vận động (ROM) không đau.\n- Tăng sức mạnh cơ quanh khớp bằng bài tập kháng lực tiến triển."
-        },
-        "PHCN Nhi khoa": {
-            "icon": "👶", "color": "linear-gradient(135deg, #f39c12, #e67e22)",
-            "content": "Can thiệp sớm cho trẻ bại não và rối loạn phát triển:\n- Kỹ thuật điều hòa cảm giác (Sensory Integration).\n- Bài tập tạo thuận vận động thô và vận động tinh theo mốc phát triển."
-        }
-    }
-
-    if st.session_state.knowledge_active_cat is None:
-        st.markdown("### 📚 Cẩm Nang Tri Thức Y Chứng")
-        st.caption("Chọn chuyên khoa bên dưới để tra cứu phác đồ và tài liệu lâm sàng chuẩn hóa:")
-
-        cols = st.columns(2)
-        for idx, (cat_name, data) in enumerate(knowledge_db.items()):
-            with cols[idx % 2]:
-                st.markdown(f"""
-                    <div class="grid-card-box">
-                        <div class="icon-circle-btn" style="background: {data['color']};">
-                            {data['icon']}
-                        </div>
-                        <div style="font-weight: 700; font-size: 13px; color: #1f2937;">{cat_name}</div>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                if st.button("📖 Xem tài liệu", key=f"btn_k_cat_{idx}", use_container_width=True):
-                    st.session_state.knowledge_active_cat = cat_name
-                    st.rerun()
-    else:
-        c1, c2 = st.columns([4, 1])
-        with c1:
-            st.markdown(f"#### 📖 Chuyên khoa: `{st.session_state.knowledge_active_cat}`")
-        with c2:
-            if st.button("⬅ Quay lại", use_container_width=True):
-                st.session_state.knowledge_active_cat = None
-                st.rerun()
+        search_knowledge_kw = st.text_input("🔍 Tìm kiếm nhanh bệnh lý, triệu chứng...", placeholder="Nhập từ khóa...", key="search_knowledge_input")
 
         st.markdown("---")
-        st.markdown('<div class="scrollable-content">', unsafe_allow_html=True)
-        
-        with st.container(border=True):
-            st.markdown("##### 📄 Nội dung phác đồ & Hướng dẫn y khoa")
-            st.markdown(knowledge_db[st.session_state.knowledge_active_cat]["content"])
-            
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("##### 🗂️ Danh mục chuyên khoa & Vùng cơ thể")
+
+        knowledge_items = [
+            ("Cột sống cổ", "🦴", "C1-C7 và hội chứng chèn ép"),
+            ("Cột sống thắt lưng", "🩻", "Thoát vị đĩa đệm, đau thần kinh tọa"),
+            ("Khớp vai", "🦾", "Chóp xoay & đông cứng khớp vai"),
+            ("Khuỷu tay", "💪", "Viêm lồi cầu, hội chứng ống khuỷu"),
+            ("Cổ tay – bàn tay", "✋", "Hội chứng ống cổ tay, De Quervain"),
+            ("Khớp háng", "🦿", "Thoái hóa & kẹp háng FAI"),
+            ("Khớp gối", "🦵", "ACL, sụn chêm & thoái hóa gối"),
+            ("Cổ chân – bàn chân", "🦶", "Bong gân & viêm cân gan chân"),
+            ("Thần kinh & Khác", "🧠", "Đột quỵ, phục hồi chức năng thần kinh")
+        ]
+
+        cols = st.columns(3)
+        for idx, item in enumerate(knowledge_items):
+            title, icon, desc = item
+            col_target = cols[idx % 3]
+            with col_target:
+                with st.container(border=True):
+                    st.markdown(f"<h3 style='text-align: center; margin: 0;'>{icon}</h3>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='text-align: center; font-weight: bold; margin: 5px 0;'>{title}</p>", unsafe_allow_html=True)
+                    st.caption(desc)
+                    if st.button("📖 Đọc sách", use_container_width=True, key=f"open_kb_{idx}"):
+                        st.session_state.kb_detail_page = title
+                        st.rerun()
+    else:
+        current_region = st.session_state.kb_detail_page
+
+        if st.button("⬅️ Quay lại danh mục", type="secondary", key="back_to_grid_kb"):
+            st.session_state.kb_detail_page = None
+            st.rerun()
+
+        st.markdown("---")
+        st.subheader(f"📚 SÁCH CHUYÊN KHOA: {current_region.upper()}")
+        st.caption("Tài liệu huấn luyện và tra cứu nhanh lâm sàng Phục hồi chức năng vận động.")
+
+        knowledge_textbook_db = {
+            "Cột sống cổ": (
+                "1. Giải phẫu & Sinh cơ học cột sống cổ",
+                "Cột sống cổ gồm 7 đốt sống (C1-C7), chịu trách nhiệm nâng đỡ đầu và biên độ vận động lớn.",
+                "Hội chứng cổ - vai - gáy, thoái hóa đốt sống cổ, thoát vị đĩa đệm cổ.",
+                "Đau lan dọc xuống tay, tê bì ngón tay, hạn chế tầm vận động xoay cổ.",
+                "Nghiệm pháp Spurling (nén ép cổ), Test kéo giãn cổ, Test Lhermitte.",
+                "Giảm đau bằng vật lý trị liệu, kéo giãn cột sống cổ, tập mạnh nhóm cơ cổ sâu."
+            ),
+            # Các vùng khác tương tự...
+        }
+
+        content = knowledge_textbook_db.get(current_region, (
+            "1. Tổng quan chuyên khảo",
+            "Nội dung đang được cập nhật theo phác đồ chuẩn y khoa.",
+            "Các hội chứng thường gặp và tổn thương cấu trúc liên quan.",
+            "Triệu chứng lâm sàng điển hình và biểu hiện cơ năng, thực thể.",
+            "Hệ thống nghiệm pháp, test đặc hiệu khám lâm sàng chuyên sâu.",
+            "Phác đồ điều trị vật lý trị liệu và phục hồi chức năng vận động toàn diện."
+        ))
+
+        sec_title, intro, pathology, symptoms, tests, treatment = content
+
+        st.markdown(f"#### 📖 {sec_title}")
+        st.info(intro)
+
+        with st.expander("📌 2. Các hội chứng & Bệnh lý thường gặp", expanded=True):
+            st.markdown(pathology)
+
+        with st.expander("🩺 3. Triệu chứng lâm sàng & Biểu hiện", expanded=True):
+            st.markdown(symptoms)
+
+        with st.expander("🔍 4. Hệ thống Test đặc hiệu & Nghiệm pháp", expanded=True):
+            st.markdown(tests)
+
+        with st.expander("⚙️ 5. Phác đồ Vật lý trị liệu & PHCN", expanded=True):
+            st.markdown(treatment)
+
+        st.markdown("---")
+        if st.button("⬅️ Quay lại danh mục chuyên khoa", type="primary", key="bottom_back_btn"):
+            st.session_state.kb_detail_page = None
+            st.rerun()
