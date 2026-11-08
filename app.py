@@ -3,7 +3,7 @@
 # =========================================================
 import streamlit as st
 
-# Import đúng chuẩn, không bị dính ký tự thừa
+# Import chính xác các tab
 from Core.tab2_trithuc import render_tab2
 from Core.tab3_kham import render_tab3
 from Core.tab4_phcn import render_tab4
