@@ -1,3 +1,62 @@
+# =========================================================
+# PHCN AI 1.8 - TRỢ LÝ LÂM SÀNG PHỤC HỒI CHỨC NĂNG
+# =========================================================
+import streamlit as st
+import datetime
+
+# 1. Cấu hình giao diện trang & CSS tối ưu sát lề gọn gàng
+st.set_page_config(
+    page_title="PHCN AI 1.8 - Trợ lý lâm sàng PHCN",
+    page_icon="🩺",
+    layout="centered"
+)
+
+st.markdown("""
+<style>
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 2rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    div.stButton > button {
+        border-radius: 8px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# 2. Quản lý lịch sử khám bệnh
+class SimpleHistoryManager:
+    def __init__(self):
+        if "db_history" not in st.session_state:
+            st.session_state.db_history = {}
+            
+    def get_patient_history(self, phone):
+        return st.session_state.db_history.get(phone, [])
+        
+    def save_visit(self, phone, data):
+        if phone not in st.session_state.db_history:
+            st.session_state.db_history[phone] = []
+        data["date"] = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+        st.session_state.db_history[phone].insert(0, data)
+
+if "history_mgr" not in st.session_state:
+    st.session_state.history_mgr = SimpleHistoryManager()
+
+history_mgr = st.session_state.history_mgr
+
+# 3. Tiêu đề ứng dụng
+st.markdown("### 🩺 PHCN AI 1.8")
+st.caption("Trợ lý lâm sàng Phục hồi chức năng & Vật lý trị liệu toàn diện")
+
+# 4. Khởi tạo 4 tab chính (Bắt buộc phải nằm trên cùng trước các lệnh with tab)
+tab1, tab2, tab3, tab4 = st.tabs([
+    "1. Hồ sơ", 
+    "2. Tri thức", 
+    "3. Khám", 
+    "4. PHCN"
+])
+
 # ------------------------------------------
 # TAB 1: HỒ SƠ BỆNH NHÂN, LỊCH SỬ & THÊM MỚI
 # ------------------------------------------
