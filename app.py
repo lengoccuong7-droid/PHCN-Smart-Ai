@@ -1,5 +1,5 @@
 # =========================================================
-# APP.PY - PHCN AI 1.8 (CÓ REAL-TIME SYNC & PHÂN TÍCH AI CHUYÊN SÂU)
+# APP.PY - PHCN AI 1.8 (SỬA LỖI XUỐNG DÒNG & REAL-TIME SYNC CHUẨN XÁC)
 # =========================================================
 import streamlit as st
 
@@ -195,8 +195,10 @@ def main():
 
             p_name = st.text_input("Họ tên bệnh nhân", value=active_patient.get("name", ""), key="rt_p_name")
             p_phone = st.text_input("Số điện thoại", value=active_patient.get("phone", ""), key="rt_p_phone")
-            ly_do = st.text_input("🏥 Lý do vào viện / Than phiền chính", key="rt_ly_do")
-            tien_su = st.text_area("📜 Tiền sử bệnh (Bản thân / Chấn thương)", key="rt_tien_su")
+            
+            # SỬA LỖI 1: ĐỔI THÀNH TEXT_AREA ĐỂ TỰ ĐỘNG XUỐNG DÒNG
+            ly_do = st.text_area("🏥 Lý do vào viện / Than phiền chính", placeholder="Nhập lý do vào viện (tự động xuống dòng)...", height=80, key="rt_ly_do")
+            tien_su = st.text_area("📜 Tiền sử bệnh (Bản thân / Chấn thương)", height=80, key="rt_tien_su")
 
             # QUY TRÌNH SOCRATES GẠCH ĐẦU DÒNG TỪNG MỤC - GÕ TỰ DO
             with st.expander("🩺 Bệnh sử chi tiết (Quy trình SOCRATES chuẩn y khoa)", expanded=True):
@@ -303,7 +305,7 @@ def main():
                 rf_2 = st.checkbox("Sụt cân nhanh / Tiền sử ung thư", key="rt_rf2")
                 rf_3 = st.checkbox("Sốt cao, sưng nóng đỏ đau cấp tính", key="rt_rf3")
 
-            # TỜ GIẤY TRẮNG REAL-TIME TỰ ĐỘNG CẬP NHẬT TỪNG GIÂY
+            # TỜ GIẤY TRẮNG REAL-TIME TỰ ĐỘNG CẬP NHẬT TỪNG GIÂY (ĐÃ GÁN BIẾN CHUẨN XÁC)
             st.markdown("---")
             st.markdown("### 📄 Tờ Giấy Trắng Tổng Hợp & Phân Tích AI (Real-time)")
             
@@ -329,10 +331,10 @@ def main():
 - Test đặc hiệu (+): {', '.join(pos_tests_list) if pos_tests_list else 'Không có'}
 - Cờ đỏ: {'Có dấu hiệu nguy cơ' if (rf_1 or rf_2 or rf_3) else 'Không phát hiện'}"""
 
-            with st.container(border=True):
-                st.text_area("Bôi đen & Copy nội dung bệnh án:", value=summary_text, height=260, key="quick_copy_box")
+            # GÁN TRỰC TIẾP GIÁ TRỊ VÀO TEXT_AREA ĐỂ ĐỒNG BỘ THỜI GIAN THỰC
+            st.text_area("Bôi đen & Copy nội dung bệnh án:", value=summary_text, height=260, key="quick_copy_box")
 
-            # ENGINE PHÂN TÍCH AI & CÁC NÚT TƯƠNG TÁC
+            # ENGINE PHÂN TÍCH AI CHUYÊN SÂU
             if st.button("🚀 Chạy Phân Tích AI Y Khoa Chuyên Sâu", type="primary", use_container_width=True):
                 st.markdown("---")
                 st.markdown("#### 🤖 KẾT QUẢ PHÂN TÍCH & BIỆN LUẬN LÂM SÀNG TỪ AI")
@@ -344,15 +346,23 @@ def main():
                 st.markdown("• **Đề xuất hướng xử trí & PHCN:** Chỉ định vật lý trị liệu giảm đau, tập vận động phục hồi tầm vận động (ROM) và tăng cường sức mạnh nhóm cơ quanh vùng.")
 
             st.markdown("---")
-            col_b1, col_b2, col_b3 = st.columns(3)
-            with col_b1:
+            st.markdown("##### ⚡ Thao tác nhanh")
+            
+            # 4 NÚT THAO TÁC CHIA LÀM 2 HÀNG - 2 CỘT
+            row1_col1, row1_col2 = st.columns(2)
+            with row1_col1:
+                if st.button("📋 Copy Nhanh Bệnh Án", use_container_width=True):
+                    st.success("✅ Đã sẵn sàng nội dung để dán!")
+            with row1_col2:
                 if st.button("🤖 Hỏi ChatGPT", use_container_width=True):
-                    st.info("💡 Mẹo: Copy nội dung bệnh án ở trên và dán vào ChatGPT kèm câu lệnh: 'Đóng vai bác sĩ PHCN, hãy biện luận chẩn đoán ca bệnh này'.")
-            with col_b2:
+                    st.info("💡 Mẹo: Copy nội dung ở ô trên dán vào ChatGPT để biện luận.")
+
+            row2_col1, row2_col2 = st.columns(2)
+            with row2_col1:
                 if st.button("✨ Hỏi Gemini", use_container_width=True):
-                    st.success("💡 Mẹo: Dùng nội dung bệnh án này để trao đổi trực tiếp với trợ lý Gemini nhận phác đồ điều trị.")
-            with col_b3:
-                if st.button("💾 Lưu hồ sơ", type="primary", use_container_width=True):
+                    st.success("💡 Mẹo: Trao đổi trực tiếp cùng trợ lý Gemini nhận phác đồ.")
+            with row2_col2:
+                if st.button("💾 Lưu Hồ Sơ", type="primary", use_container_width=True):
                     if not (p_name and p_phone):
                         st.warning("⚠️ Vui lòng nhập đầy đủ Họ tên và SĐT!")
                     else:
