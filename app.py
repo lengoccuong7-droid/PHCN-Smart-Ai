@@ -1,5 +1,5 @@
 # =========================================================
-# APP.PY - PHCN AI 1.8 (HOÀN CHỈNH, ĐỦ DỮ LIỆU & BỐ CỤC)
+# APP.PY - PHCN AI 1.8 (HOÀN CHỈNH, TỐI ƯU MOBILE & KHÔNG LỖI IMPORT)
 # =========================================================
 import streamlit as st
 
@@ -10,38 +10,29 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- CSS CHUNG CHO GIAO DIỆN GRID-TO-SCROLL ---
+# --- CSS TỐI ƯU GIAO DIỆN DI ĐỘNG & MÁY TÍNH ---
 st.markdown("""
     <style>
-    [data-testid="stHorizontalBlock"] {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px !important;
-    }
-    @media (min-width: 768px) {
-        [data-testid="stHorizontalBlock"] {
-            grid-template-columns: repeat(4, 1fr) !important;
-        }
-    }
     .grid-card-box {
         background: #ffffff;
-        border-radius: 16px;
-        padding: 14px 8px;
+        border-radius: 14px;
+        padding: 12px 8px;
         text-align: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         border: 1px solid #eaeaea;
+        margin-bottom: 10px;
     }
     .icon-circle-btn {
-        width: 50px;
-        height: 50px;
+        width: 45px;
+        height: 45px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
-        margin: 0 auto 8px auto;
+        font-size: 22px;
+        margin: 0 auto 6px auto;
         color: white;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -50,52 +41,67 @@ def main():
     st.title("🩺 PHCN AI 1.8 – Trợ lý Phục hồi Chức năng & Lâm sàng")
     
     tab1, tab2, tab3, tab4 = st.tabs([
-        "👤 Hồ sơ & Lịch sử", 
-        "📚 Cẩm nang Tri thức", 
+        "👤 Hồ sơ", 
+        "📚 Tri thức", 
         "🩺 Khám Lâm sàng", 
-        "🏋️‍♂️ Kho Bài tập PHCN"
+        "🏋️‍♂️ Bài tập PHCN"
     ])
 
     # ================= TAB 1: HỒ SƠ =================
     with tab1:
         st.subheader("👤 Quản lý Hồ sơ Bệnh nhân & Lịch sử Khám")
         st.info("Sử dụng trình quản lý lịch sử để tra cứu và lưu trữ bệnh án.")
+        
+        # Khởi tạo session lưu bệnh nhân hiện tại nếu chưa có
+        if "current_patient" not in st.session_state:
+            st.session_state.current_patient = {"name": "", "phone": "", "age": 1990, "job": ""}
+            
+        with st.form("patient_form"):
+            p_name = st.text_input("Họ tên bệnh nhân", value=st.session_state.current_patient["name"])
+            p_phone = st.text_input("Số điện thoại", value=st.session_state.current_patient["phone"])
+            p_age = st.number_input("Năm sinh", min_value=1900, max_value=2026, value=int(st.session_state.current_patient["age"]))
+            p_job = st.text_input("Nghề nghiệp", value=st.session_state.current_patient["job"])
+            
+            if st.form_submit_button("💾 Lưu thông tin bệnh nhân", use_container_width=True):
+                st.session_state.current_patient = {"name": p_name, "phone": p_phone, "age": p_age, "job": p_job}
+                st.success(f"Đã lưu thông tin cho bệnh nhân: **{p_name}**! Chuyển sang Tab 3 để khám lâm sàng.")
 
     # ================= TAB 2: CẨM NANG TRI THỨC =================
     with tab2:
         if "knowledge_active_cat" not in st.session_state:
             st.session_state.knowledge_active_cat = None
 
+        knowledge_db = {
+            "Đột quỵ & Thần kinh": {
+                "icon": "🧠", "color": "linear-gradient(135deg, #48dbfb, #0abde3)",
+                "content": "Phác đồ vận động trị liệu sớm cho bệnh nhân đột quỵ:\n- Đánh giá giai đoạn co cứng theo Brunnstrom.\n- Áp dụng kỹ thuật ức chế trương lực cơ Bobath.\n- Lượng giá thăng bằng thân mình và bài tập chuyển đổi tư thế."
+            },
+            "Cột sống & Cơ xương": {
+                "icon": "🦴", "color": "linear-gradient(135deg, #ff6b6b, #ee5253)",
+                "content": "Nguyên tắc điều trị hội chứng thắt lưng hông & cột sống cổ:\n- Kiểm soát đau cấp tính bằng phương pháp giảm áp và tư thế đúng.\n- Bài tập kéo giãn nhóm cơ dựng sống và tăng cường cơ lõi (Core stability)."
+            },
+            "Khớp ngoại biên": {
+                "icon": "🦾", "color": "linear-gradient(135deg, #10ac84, #1dd1a1)",
+                "content": "Phục hồi chức năng sau tổn thương khớp (Vai, gối, khuỷu):\n- Duy trì và gia tăng tầm vận động (ROM) không đau.\n- Tăng sức mạnh cơ quanh khớp bằng bài tập kháng lực tiến triển."
+            },
+            "PHCN Nhi khoa": {
+                "icon": "👶", "color": "linear-gradient(135deg, #f39c12, #e67e22)",
+                "content": "Can thiệp sớm cho trẻ bại não và rối loạn phát triển:\n- Kỹ thuật điều hòa cảm giác (Sensory Integration).\n- Bài tập tạo thuận vận động thô và vận động tinh theo mốc phát triển."
+            }
+        }
+
         if st.session_state.knowledge_active_cat is None:
             st.markdown("### 📚 Cẩm Nang Tri Thức Y Chứng")
-            st.caption("Chọn chuyên khoa để tra cứu phác đồ và tài liệu lâm sàng:")
-            
-            categories = [
-                {"id": "stroke", "name": "Đột quỵ & Thần kinh", "icon": "🧠", "color": "linear-gradient(135deg, #48dbfb, #0abde3)"},
-                {"id": "spine", "name": "Cột sống & Cơ xương", "icon": "🦴", "color": "linear-gradient(135deg, #ff6b6b, #ee5253)"},
-                {"id": "joint", "name": "Khớp ngoại biên", "icon": "🦾", "color": "linear-gradient(135deg, #10ac84, #1dd1a1)"},
-                {"id": "pediatric", "name": "PHCN Nhi khoa", "icon": "👶", "color": "linear-gradient(135deg, #f39c12, #e67e22)"}
-            ]
+            st.caption("Chọn chuyên khoa bên dưới để tra cứu phác đồ:")
 
-            cols = st.columns(len(categories))
-            for idx, cat in enumerate(categories):
-                with cols[idx]:
-                    st.markdown(f"""
-                        <div class="grid-card-box">
-                            <div class="icon-circle-btn" style="background: {cat['color']};">
-                                {cat['icon']}
-                            </div>
-                            <div style="font-weight: 700; font-size: 13px; color: #1f2937;">{cat['name']}</div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    if st.button("Xem", key=f"fast_cat_{cat['id']}", use_container_width=True):
-                        st.session_state.knowledge_active_cat = cat['name']
-                        st.rerun()
+            for cat_name, data in knowledge_db.items():
+                if st.button(f"{data['icon']} {cat_name}", use_container_width=True, key=f"k_cat_{cat_name}"):
+                    st.session_state.knowledge_active_cat = cat_name
+                    st.rerun()
         else:
             c1, c2 = st.columns([4, 1])
             with c1:
-                st.markdown(f"#### 📖 Chuyên khoa: `{st.session_state.knowledge_active_cat}`")
+                st.markdown(f"#### 📖 `{st.session_state.knowledge_active_cat}`")
             with c2:
                 if st.button("⬅ Quay lại", use_container_width=True):
                     st.session_state.knowledge_active_cat = None
@@ -103,75 +109,82 @@ def main():
 
             st.markdown("---")
             with st.container(border=True):
-                st.markdown("##### 📄 Nguyên tắc Vận động Trị liệu Y học Chứng cứ")
-                st.markdown("""
-                * **Mục tiêu:** Phòng ngừa co rút biến dạng, gia tăng khả năng độc lập sinh hoạt tối đa cho người bệnh.
-                * **Nguyên tắc cốt lõi:** Bắt đầu càng sớm càng tốt khi tình trạng toàn thân ổn định; loại bỏ mẫu vận động bất thường bằng kỹ thuật tạo thuận thần kinh cơ.
-                """)
+                st.markdown(knowledge_db[st.session_state.knowledge_active_cat]["content"])
 
     # ================= TAB 3: KHÁM LÂM SÀNG =================
     with tab3:
         if "exam_active_region" not in st.session_state:
             st.session_state.exam_active_region = None
 
+        regions = [
+            ("Cột sống cổ", "🦴", "linear-gradient(135deg, #ff6b6b, #ee5253)"),
+            ("Cột sống thắt lưng", "🩻", "linear-gradient(135deg, #10ac84, #1dd1a1)"),
+            ("Khớp vai", "🦾", "linear-gradient(135deg, #5f27cd, #341f97)"),
+            ("Khuỷu tay", "💪", "linear-gradient(135deg, #ff9f43, #ee5253)"),
+            ("Cổ tay – bàn tay", "✋", "linear-gradient(135deg, #48dbfb, #0abde3)"),
+            ("Khớp háng", "🦿", "linear-gradient(135deg, #f39c12, #e67e22)"),
+            ("Khớp gối", "🦵", "linear-gradient(135deg, #2e86de, #222f3e)"),
+            ("Cổ chân – bàn chân", "🦶", "linear-gradient(135deg, #ee5253, #ff6b6b)"),
+            ("Thần kinh & Khác", "🧠", "linear-gradient(135deg, #0abde3, #2e86de)")
+        ]
+
         if st.session_state.exam_active_region is None:
-            st.markdown("### 🩺 Chọn Vùng Khám Lâm Sàng")
-            regions = [
-                {"id": "neck", "name": "Cột sống cổ", "icon": "🦴", "color": "linear-gradient(135deg, #ff6b6b, #ee5253)"},
-                {"id": "back", "name": "Thắt lưng", "icon": "🩻", "color": "linear-gradient(135deg, #10ac84, #1dd1a1)"},
-                {"id": "elbow", "name": "Khuỷu tay", "icon": "💪", "color": "linear-gradient(135deg, #5f27cd, #341f97)"},
-                {"id": "knee", "name": "Khớp gối", "icon": "🦵", "color": "linear-gradient(135deg, #ff9f43, #ee5253)"}
-            ]
+            st.subheader("🎯 Chọn Vùng Thăm Khám Lâm Sàng")
+            st.markdown("Chọn vùng cơ thể để mở phiếu thăm khám:")
 
-            cols = st.columns(len(regions))
-            for idx, reg in enumerate(regions):
-                with cols[idx]:
-                    st.markdown(f"""
-                        <div class="grid-card-box">
-                            <div class="icon-circle-btn" style="background: {reg['color']};">
-                                {reg['icon']}
-                            </div>
-                            <div style="font-weight: 700; font-size: 13px; color: #1f2937;">{reg['name']}</div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    if st.button("Chọn", key=f"fast_reg_{reg['id']}", use_container_width=True):
-                        st.session_state.exam_active_region = reg['name']
-                        st.rerun()
-        else:
-            c1, c2 = st.columns([4, 1])
-            with c1:
-                st.markdown(f"#### 📝 Đang khám: `{st.session_state.exam_active_region}`")
-            with c2:
-                if st.button("⬅ Đổi vùng", use_container_width=True):
-                    st.session_state.exam_active_region = None
+            for title, icon, color in regions:
+                if st.button(f"{icon} {title}", use_container_width=True, key=f"reg_btn_{title}"):
+                    st.session_state.exam_active_region = title
                     st.rerun()
+        else:
+            current_reg = st.session_state.exam_active_region
 
+            if st.button("⬅️ Quay lại chọn vùng khám", type="secondary"):
+                st.session_state.exam_active_region = None
+                st.rerun()
+
+            st.markdown(f"### 📋 PHIẾU KHÁM: {current_reg.upper()}")
             st.markdown("---")
-            left_col, right_col = st.columns([3, 2])
-            with left_col:
-                with st.expander("1️⃣ Hành chính & Triệu chứng", expanded=True):
-                    p_name = st.text_input("Họ tên", key="rt_p_name")
-                    p_phone = st.text_input("SĐT", key="rt_p_phone")
-                    symptoms = st.text_area("Triệu chứng", key="rt_symptoms")
-                    nrs = st.slider("NRS (Đau)", 0, 10, 2, key="rt_nrs")
-                with st.expander("2️⃣ Test & Tầm vận động", expanded=True):
-                    test_val = st.radio("Nghiệm pháp chính", ["Âm tính (-)", "Dương tính (+)"], key="rt_test")
-                    rom_val = st.text_input("ROM (Tầm vận động)", key="rt_rom")
-            with right_col:
-                st.markdown("#### 📄 Tờ Giấy Trắng")
-                summary_text = f"""[BỆNH ÁN PHCN]
-- Vùng: {st.session_state.get('exam_active_region', '---')}
-- Bệnh nhân: {st.session_state.get('rt_p_name', '---')} ({st.session_state.get('rt_p_phone', '---')})
-- Đau NRS: {st.session_state.get('rt_nrs', 0)}/10"""
-                with st.container(border=True):
-                    st.text_area("Copy nội dung:", value=summary_text, height=220)
+
+            active_patient = st.session_state.get("current_patient", {"name": "", "phone": "", "age": 1990, "job": ""})
+            if active_patient.get("name"):
+                st.info(f"🔗 Liên kết từ Tab 1 – BN: **{active_patient.get('name')}** (SĐT: {active_patient.get('phone')})")
+
+            # Form nhập liệu 1 cột dọc tối ưu mobile
+            p_name = st.text_input("Họ tên bệnh nhân", value=active_patient.get("name", ""), key="rt_p_name")
+            p_phone = st.text_input("Số điện thoại", value=active_patient.get("phone", ""), key="rt_p_phone")
+            ly_do = st.text_input("🏥 Lý do vào viện / Than phiền chính", key="rt_ly_do")
+
+            with st.expander("🩺 Bệnh sử (SOCRATES) & Đau", expanded=True):
+                character = st.text_input("Tính chất đau (Character)", key="rt_char")
+                nrs = st.selectbox("Mức độ đau NRS (0-10)", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], key="rt_nrs")
+
+            with st.expander("🔍 Khám thực thể (Nhìn – Sờ – Đo ROM)", expanded=True):
+                inspect = st.text_area("👁️ NHÌN (Inspection)", key="rt_inspect")
+                palp = st.text_area("✋ SỜ (Palpation)", key="rt_palp")
+                rom_meas = st.text_area("📏 ĐO / GÕ (ROM & Phản xạ)", key="rt_rom")
+
+            with st.expander("🧬 Nghiệm pháp đặc hiệu", expanded=False):
+                test_res = st.radio("Kết quả test", ["Âm tính (-)", "Dương tính (+)"], horizontal=True, key="ex_t_res_0")
+
+            # TỜ GIẤY TRẮNG REAL-TIME HIỂN THỊ XUỐNG DƯỚI RỘNG RÃI
+            st.markdown("---")
+            st.markdown("### 📄 Tờ Giấy Trắng & Phân Tích AI")
+            
+            summary_text = f"""[BỆNH ÁN PHCN]
+- Vùng khám: {current_reg}
+- Bệnh nhân: {p_name if p_name else '---'} ({p_phone if p_phone else '---'})
+- Lý do: {ly_do if ly_do else '---'}
+- Đau NRS: {nrs}/10
+- Nhìn: {inspect if inspect else '---'}
+- Sờ: {palp if palp else '---'}
+- ROM: {rom_meas if rom_meas else '---'}"""
+
+            with st.container(border=True):
+                st.text_area("Bôi đen & Copy nội dung:", value=summary_text, height=200, key="quick_copy_box")
 
     # ================= TAB 4: KHO BÀI TẬP PHCN =================
     with tab4:
-        st.markdown("### 🏋️‍♂️ Kho Bài Tập Phục Hồi Chức Năng Theo Bệnh Lý")
-        st.caption("Chọn nhóm bệnh lý để xem trọn bộ 7 bài tập chuyên sâu:")
-
         pathologies_m4 = {
             "1. Tai biến mạch máu não (Liệt nửa người)": [
                 "1. Tập vận động thụ động các khớp bên liệt duy trì tầm vận động (ROM).",
@@ -183,101 +196,106 @@ def main():
                 "7. Tập mạnh cơ chủ động bên lành và các nhóm cơ duỗi bên liệt."
             ],
             "2. Rối loạn nuốt (Dysphagia) sau tai biến": [
-                "1. Bài tập vận động cơ môi (mím chặt, cười hết cỡ, thổi phồng má, phát âm U-I).",
-                "2. Bài tập vận động lưỡi (đẩy lưỡi ra trước, sang trái, sang phải, liếm vòm họng).",
-                "3. Kích thích nhiệt lạnh vùng cung khẩu cái mềm kích thích phản xạ nuốt.",
-                "4. Bài tập Masako (giữ đầu lưỡi giữa hai hàm răng và nuốt nước bọt).",
-                "5. Bài tập Shaker (nâng đầu ở tư thế nằm ngửa để mở rộng cơ thắt thực quản trên).",
-                "6. Bài tập đóng nắp thanh môn (nuốt giữ hơi, ho mạnh ngay sau khi nuốt).",
+                "1. Bài tập vận động cơ môi (mím chặt, cười hết cỡ, thổi phồng má).",
+                "2. Bài tập vận động lưỡi (đẩy lưỡi ra trước, sang trái, sang phải).",
+                "3. Kích thích nhiệt lạnh vùng cung khẩu cái mềm.",
+                "4. Bài tập Masako (giữ đầu lưỡi giữa hai hàm răng và nuốt).",
+                "5. Bài tập Shaker (nâng đầu ở tư thế nằm ngửa).",
+                "6. Bài tập đóng nắp thanh môn (nuốt giữ hơi, ho mạnh).",
                 "7. Luyện tập nuốt theo các độ quánh thức ăn chuẩn hóa IDDSI."
             ],
             "3. Rối loạn ngôn ngữ & Thất ngôn (Aphasia)": [
-                "1. Liệu pháp kích thích thính giác (nghe từ và chỉ tay vào hình ảnh/đồ vật).",
-                "2. Luyện phát âm nguyên âm cơ bản (A - O - E - I - U) tròn khẩu hình.",
-                "3. Bài tập gọi tên đồ vật sinh hoạt hằng ngày qua thẻ hình ảnh (Flashcard).",
-                "4. Liệu pháp âm điệu ngữ âm (MEL/MIT) dùng nhịp điệu kích thích phát âm câu ngắn.",
-                "5. Bài tập hoàn thành câu (bác sĩ đọc ngắt quãng, bệnh nhân nói từ cuối).",
-                "6. Tập đặt câu hỏi và phản đáp các nhu cầu giao tiếp cơ bản (ăn, uống, đau, đi vệ sinh).",
-                "7. Bài tập giao tiếp phi ngôn ngữ hỗ trợ (dùng cử chỉ tay, bảng ký hiệu)."
+                "1. Liệu pháp kích thích thính giác qua hình ảnh/đồ vật.",
+                "2. Luyện phát âm nguyên âm cơ bản (A - O - E - I - U).",
+                "3. Bài tập gọi tên đồ vật sinh hoạt qua Flashcard.",
+                "4. Liệu pháp âm điệu ngữ âm (MEL/MIT).",
+                "5. Bài tập hoàn thành câu ngắn.",
+                "6. Tập đặt câu hỏi và phản đáp nhu cầu cơ bản.",
+                "7. Bài tập giao tiếp phi ngôn ngữ hỗ trợ."
             ],
-            "4. Âm ngữ trị liệu (Rối loạn phát âm / Dysarthria)": [
-                "1. Bài tập kiểm soát hơi thở cơ hoành (thở sâu, giữ hơi, thổi nến đều).",
-                "2. Bài tập tăng sức mạnh cơ hô hấp phục vụ phát âm câu dài.",
-                "3. Bài tập vận động linh hoạt cơ quan phát âm (vòm miệng mềm, môi, lưỡi, hàm dưới).",
-                "4. Luyện phát âm chính xác các cặp phụ âm - nguyên âm.",
-                "5. Bài tập điều chỉnh tốc độ nói (nói chậm, ngắt nhịp theo từ).",
-                "6. Bài tập kiểm soát cường độ và cao độ giọng nói (to/nhỏ, trầm/bổng).",
-                "7. Luyện đọc đoạn văn ngắn trước gương kết hợp kiểm soát nhịp thở và khẩu hình."
+            "4. Âm ngữ trị liệu (Rối loạn phát âm)": [
+                "1. Bài tập kiểm soát hơi thở cơ hoành.",
+                "2. Tăng sức mạnh cơ hô hấp.",
+                "3. Vận động linh hoạt cơ quan phát âm.",
+                "4. Luyện phát âm cặp phụ âm - nguyên âm.",
+                "5. Điều chỉnh tốc độ nói.",
+                "6. Kiểm soát cường độ và cao độ giọng nói.",
+                "7. Luyện đọc đoạn văn ngắn trước gương."
             ],
-            "5. Trẻ tự kỷ (Rối loạn vận động & cảm giác)": [
-                "1. Bài tập điều hòa cảm giác tiền đình (nhún nhảy trên bóng trị liệu, đung đưa võng).",
-                "2. Bài tập cảm giác bản thể (ôm chặt, ép khớp sâu, lăn cuộn trong thảm bọt biển).",
-                "3. Bài tập đi trên ván thăng bằng nâng cao phối hợp vận động thô.",
-                "4. Bài tập kéo giãn cơ cẳng chân (phòng ngừa và sửa dáng đi nhón gót).",
-                "5. Bài tập vận động tinh bàn tay (nhặt hạt nhỏ, xếp hình khối, xâu chuỗi hạt).",
-                "6. Bài tập phối hợp tay - mắt theo hiệu lệnh trò chơi tương tác.",
-                "7. Bài tập bắt chước tư thế động học giúp tăng cường tập trung chú ý."
+            "5. Trẻ tự kỷ (Vận động & Cảm giác)": [
+                "1. Điều hòa cảm giác tiền đình trên bóng trị liệu.",
+                "2. Cảm giác bản thể (ôm chặt, ép khớp sâu).",
+                "3. Đi trên ván thăng bằng phối hợp vận động thô.",
+                "4. Kéo giãn cơ cẳng chân chống nhón gót.",
+                "5. Vận động tinh bàn tay (nhặt hạt, xếp hình).",
+                "6. Phối hợp tay - mắt theo trò chơi tương tác.",
+                "7. Bắt chước tư thế động học tăng tập trung."
             ],
-            "6. Xơ hóa cơ ức đòn chũm (Vẹo cổ bẩm sinh)": [
-                "1. Kéo giãn thụ động cơ ức đòn chũm bên bị xơ (nghiêng đầu sang bên lành, quay cằm về bên bệnh).",
-                "2. Kích thích trẻ quay đầu về bên bệnh bằng âm thanh và đồ chơi màu sắc.",
-                "3. Bài tập đặt tư thế nằm ngủ đúng (dùng gối cát/gối định hình giữ cổ thẳng).",
-                "4. Kỹ thuật xoa bóp, miết nhẹ nhàng giải phóng dải xơ cơ ức đòn chũm.",
-                "5. Bài tập vận động chủ động quay cổ (với trẻ lớn) qua các trò chơi theo tầm vận động.",
-                "6. Tập mạnh cơ cổ bên đối diện để cân bằng lực kéo cột sống cổ.",
-                "7. Hướng dẫn phụ huynh duy trì bế, cho bú và sinh hoạt ở tư thế điều chỉnh."
+            "6. Xơ hóa cơ ức đòn chũm (Vẹo cổ)": [
+                "1. Kéo giãn thụ động cơ ức đòn chũm bên bị xơ.",
+                "2. Kích thích trẻ quay đầu về bên bệnh.",
+                "3. Đặt tư thế nằm ngủ định hình giữ cổ thẳng.",
+                "4. Xoa bóp, miết nhẹ giải phóng mô mềm.",
+                "5. Vận động chủ động quay cổ qua trò chơi.",
+                "6. Tập mạnh cơ cổ bên đối diện.",
+                "7. Hướng dẫn phụ huynh duy trì tư thế đúng."
             ],
-            "7. PHCN sau Phẫu thuật đầu gối (Tái tạo ACL)": [
-                "1. Bài tập gồng cơ tĩnh tứ đầu đùi (Isometric Quads) ngay sau mổ.",
-                "2. Bài tập duỗi thẳng gối tối đa (0 độ) và gấp gối thụ động trong phạm vi cho phép.",
-                "3. Bài tập nhấc chân thẳng khỏi mặt giường (Straight Leg Raise).",
-                "4. Tập đạp xe tại chỗ không kháng trở (khi biên độ gấp gối đạt trên 90 độ).",
-                "5. Bài tập đứng dồn trọng lượng hai chân và chuyển trọng lượng sang chân mổ.",
-                "6. Bài tập thăng bằng bản thể (Proprioception) trên đĩa thăng bằng hoặc thảm mềm.",
-                "7. Bài tập mạnh cơ đùi sau (Hamstrings) và cơ cẳng chân có kháng lực tăng dần."
+            "7. PHCN sau Phẫu thuật đầu gối (ACL)": [
+                "1. Gồng cơ tĩnh tứ đầu đùi ngay sau mổ.",
+                "2. Duỗi thẳng gối tối đa và gấp gối thụ động.",
+                "3. Nhấc chân thẳng khỏi mặt giường.",
+                "4. Đạp xe tại chỗ không kháng trở.",
+                "5. Đứng dồn trọng lượng sang chân mổ.",
+                "6. Thăng bằng bản thể trên đĩa/thảm mềm.",
+                "7. Mạnh cơ đùi sau và cẳng chân kháng lực."
             ],
             "8. PHCN sau Phẫu thuật thay khớp háng": [
-                "1. Bài tập co duỗi cổ chân (Ankle pumps) ngừa huyết khối tĩnh mạch sâu chi dưới.",
-                "2. Bài tập siết cơ mông và cơ tứ đầu đùi ở tư thế nằm ngửa.",
-                "3. Bài tập trượt gót chân trên giường (gấp khớp háng nhẹ nhàng < 90 độ).",
-                "4. Bài tập dang chân sang bên (Abduction) tránh tư thế khép và xoay trong quá mức.",
-                "5. Bài tập đứng dậy từ ghế cao có tay tựa với sự hỗ trợ của khung tập đi.",
-                "6. Bài tập tái giáo dục dáng đi dồn lực đều hai chân, không khập khiễng.",
-                "7. Bài tập leo cầu thang (nguyên tắc: chân lành bước lên trước, chân mổ bước xuống trước)."
+                "1. Co duỗi cổ chân ngừa huyết khối.",
+                "2. Siết cơ mông và cơ tứ đầu đùi.",
+                "3. Trượt gót chân trên giường.",
+                "4. Dang chân sang bên tránh khép quá mức.",
+                "5. Đứng dậy từ ghế cao có tay tựa.",
+                "6. Tái giáo dục dáng đi đều hai chân.",
+                "7. Tập leo cầu thang đúng nguyên tắc."
             ],
-            "9. PHCN sau Gãy tay / Gãy chân (Hậu phẫu)": [
-                "1. Bài tập gồng cơ tĩnh bên trong bột (Isometric contraction) chống teo cơ.",
-                "2. Cử động tích cực toàn bộ các khớp tự do không bị bất động (ngón tay/ngón chân).",
-                "3. Sau tháo bột: Bài tập phục hồi tầm vận động (ROM) chủ động và thụ động các khớp lân cận.",
-                "4. Kỹ thuật xoa bóp di động sẹo mổ và giải phóng mô mềm dính.",
-                "5. Bài tập tăng dần lực cơ bằng tạ nhẹ, lò xo hoặc dây kháng lực (Theraband).",
-                "6. Bài tập tái giáo dục dáng đi (với gãy chân) hoặc bài tập cầm nắm khéo léo (với gãy tay).",
-                "7. Bài tập phục hồi chức năng sinh hoạt hằng ngày (ADL) thích ứng."
+            "9. PHCN sau Gãy tay / Gãy chân": [
+                "1. Gồng cơ tĩnh bên trong bột chống teo cơ.",
+                "2. Cử động khớp tự do không bị bất động.",
+                "3. Phục hồi tầm vận động (ROM) sau tháo bột.",
+                "4. Xoa bóp di động sẹo mổ, giải phóng mô dính.",
+                "5. Tăng dần lực cơ bằng tạ nhẹ/dây kháng lực.",
+                "6. Tái giáo dục dáng đi hoặc cầm nắm khéo léo.",
+                "7. Phục hồi chức năng sinh hoạt hằng ngày (ADL)."
             ]
         }
 
         if "selected_pathology_m4" not in st.session_state:
             st.session_state.selected_pathology_m4 = None
 
-        cols_p = st.columns(2)
-        for idx, path_key in enumerate(pathologies_m4.keys()):
-            with cols_p[idx % 2]:
-                if st.button(f"📌 {path_key}", use_container_width=True, key=f"btn_m4_path_{idx}"):
+        if st.session_state.selected_pathology_m4 is None:
+            st.markdown("### 🏋️‍♂️ Kho Bài Tập Phục Hồi Chức Năng")
+            st.caption("Chọn nhóm bệnh lý bên dưới để xem trọn bộ 7 bài tập:")
+
+            for path_key in pathologies_m4.keys():
+                if st.button(f"📌 {path_key}", use_container_width=True, key=f"btn_m4_{path_key}"):
                     st.session_state.selected_pathology_m4 = path_key
                     st.rerun()
+        else:
+            c1, c2 = st.columns([4, 1])
+            with c1:
+                st.markdown(f"#### 🏥 Phác đồ: `{st.session_state.selected_pathology_m4}`")
+            with c2:
+                if st.button("⬅ Quay lại", use_container_width=True):
+                    st.session_state.selected_pathology_m4 = None
+                    st.rerun()
 
-        if st.session_state.selected_pathology_m4:
             st.markdown("---")
-            st.success(f"🏥 Đang hiển thị phác đồ cho: **{st.session_state.selected_pathology_m4}**")
+            st.markdown("##### 📋 Trọn bộ 7 bài tập phục hồi chức năng chuẩn hóa:")
             
-            st.markdown("#### 📋 Trọn bộ 7 bài tập phục hồi chức năng chuẩn hóa:")
-            for exercise in pathologies_m4[st.session_state.selected_pathology_m4]:
-                st.markdown(f"- {exercise}")
-                
-            st.markdown("")
-            if st.button("🔄 Chọn bệnh lý khác", use_container_width=True, key="reset_m4_path"):
-                st.session_state.selected_pathology_m4 = None
-                st.rerun()
+            exercises = pathologies_m4[st.session_state.selected_pathology_m4]
+            for exercise in exercises:
+                with st.container(border=True):
+                    st.markdown(f"- {exercise}")
 
 if __name__ == "__main__":
     main()
