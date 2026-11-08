@@ -501,4 +501,7 @@ with tab4:
                 st.markdown("- **🛡️ Lưu ý an toàn:** Thực hiện đúng biên độ, dừng lại ngay khi xuất hiện cơn đau nhói hoặc chóng mặt.")
 
         st.markdown("---")
+                st.markdown("---")
         if st.button("⬅️ Quay lại danh mục nhóm bệnh lý", type="primary", key="bottom_back_rehab_btn"):
+            st.session_state.rehab_detail_page = None
+            st.rerun()
