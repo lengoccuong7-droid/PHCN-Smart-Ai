@@ -3,7 +3,7 @@
 # =========================================================
 import streamlit as st
 
-# Import chính xác các tab
+# Import các module từ thư mục Core
 from Core.tab2_trithuc import render_tab2
 from Core.tab3_kham import render_tab3
 from Core.tab4_phcn import render_tab4
@@ -29,16 +29,15 @@ def main():
     with tab1:
         st.subheader("👤 Quản lý Hồ sơ Bệnh nhân & Lịch sử Khám")
         st.info("Sử dụng trình quản lý lịch sử để tra cứu và lưu trữ bệnh án.")
-        # Gọi module hồ sơ nếu có sẵn
 
     with tab2:
-        render_tab2()  # Gọi giao diện Tab 2 đã tối ưu lưới icon & cuộn dọc
+        render_tab2()
 
     with tab3:
-        render_tab3()  # Gọi giao diện Tab 3 (Khám lâm sàng & Tờ giấy trắng)
+        render_tab3()
 
     with tab4:
-        render_tab4()  # Gọi giao diện Tab 4 (Kho bài tập đủ 9 nhóm bệnh)
+        render_tab4()
 
 if __name__ == "__main__":
     main()
