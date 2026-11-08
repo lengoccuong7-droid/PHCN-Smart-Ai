@@ -68,46 +68,84 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "4. Phục hồi chức năng"
 ])
 # ------------------------------------------
-# MỤC 1: HỒ SƠ BỆNH NHÂN & LỊCH SỬ (THẰNG SỐ 2)
+# TAB 1: HỒ SƠ BỆNH NHÂN, LỊCH SỬ & THÊM MỚI
 # ------------------------------------------
 with tab1:
-    st.subheader("👤 Quản lý Hồ sơ & Lịch sử Bệnh nhân")
-    st.markdown("Tra cứu nhanh thông tin hành chính và lịch sử thăm khám của bệnh nhân theo số điện thoại:")
-
-    # Ô nhập số điện thoại để tìm kiếm
-    search_phone_input = st.text_input("🔍 Nhập số điện thoại / Mã BN:", placeholder="Ví dụ: 0901234567", key="search_history_phone_m1")
+    st.subheader("👤 Quản lý Hồ sơ, Lịch sử & Thêm mới Bệnh nhân")
     
-    if search_phone_input:
-        # Gọi hàm lấy lịch sử từ history_mgr
-        patient_history_list = history_mgr.get_patient_history(search_phone_input)
+    sub_choice = st.radio("Chọn thao tác:", ["🔍 Tra cứu lịch sử khám", "➕ Thêm hồ sơ bệnh nhân mới"], horizontal=True, key="tab1_sub_mode")
+    
+    if sub_choice == "🔍 Tra cứu lịch sử khám":
+        st.markdown("Tra cứu nhanh thông tin hành chính và lịch sử thăm khám theo số điện thoại:")
+        search_phone_input = st.text_input("🔍 Nhập số điện thoại / Mã BN:", placeholder="Ví dụ: 0901234567", key="search_history_phone_m1")
         
-        if patient_history_list:
-            st.success(f"🎉 Đã tìm thấy {len(patient_history_list)} lần khám của bệnh nhân này.")
-            st.markdown("---")
-            for idx, visit in enumerate(patient_history_list):
-                with st.expander(f"📁 Lần khám {idx+1} – Ngày: {visit.get('date', 'N/A')}", expanded=(idx == 0)):
-                    st.markdown(f"**• Họ tên bệnh nhân:** {visit.get('patient_name', 'N/A')}")
-                    st.markdown(f"**• Số điện thoại:** {visit.get('patient_phone', 'N/A')}")
-                    st.markdown(f"**• Tóm tắt bệnh án:** {visit.get('summary', 'N/A')}")
-                st.markdown("")
+        if search_phone_input:
+            patient_history_list = history_mgr.get_patient_history(search_phone_input)
+            
+            if patient_history_list:
+                st.success(f"🎉 Đã tìm thấy {len(patient_history_list)} lần khám của bệnh nhân này.")
+                latest_visit = patient_history_list[0]
+                st.session_state.current_patient = {
+                    "name": latest_visit.get('patient_name', ''),
+                    "phone": search_phone_input,
+                    "age": latest_visit.get('patient_age', 1990),
+                    "job": latest_visit.get('patient_job', '')
+                }
+                st.markdown("---")
+                for idx, visit in enumerate(patient_history_list):
+                    with st.expander(f"📁 Lần khám {idx+1} – Ngày: {visit.get('date', 'N/A')}", expanded=(idx == 0)):
+                        st.markdown(f"**• Họ tên bệnh nhân:** {visit.get('patient_name', 'N/A')}")
+                        st.markdown(f"**• Số điện thoại:** {visit.get('patient_phone', 'N/A')}")
+                        st.markdown(f"**• Tóm tắt bệnh án:** {visit.get('summary', 'N/A')}")
+            else:
+                st.warning("⚠️ Không tìm thấy lịch sử khám nào tương ứng với số điện thoại này.")
         else:
-            st.warning("⚠️ Không tìm thấy lịch sử khám nào tương ứng với số điện thoại này trong hệ thống.")
+            st.info("💡 Nhập số điện thoại để tra cứu. Hệ thống sẽ tự động đồng bộ thông tin sang phần Khám (Tab 3) nếu tìm thấy.")
+
     else:
-            st.info("💡 Hướng dẫn: Nhập số điện thoại của bệnh nhân vào ô phía trên để hệ thống tự động truy xuất toàn bộ lịch sử các lần khám trước.")
+        st.markdown("##### ➕ Khởi tạo hồ sơ bệnh nhân mới")
+        with st.form("new_patient_form"):
+            new_name = st.text_input("Họ tên bệnh nhân:", placeholder="Nhập họ tên đầy đủ...")
+            new_phone = st.text_input("Số điện thoại (Dùng làm định danh):", placeholder="Ví dụ: 0901234567...")
+            col_np1, col_np2 = st.columns(2)
+            with col_np1:
+                new_age = st.number_input("Năm sinh:", min_value=1900, max_value=2026, value=1990)
+            with col_np2:
+                new_job = st.text_input("Nghề nghiệp:", placeholder="Nghề nghiệp...")
+            
+            submitted_new_p = st.form_submit_button("💾 Lưu bệnh nhân mới vào hệ thống", use_container_width=True)
+            if submitted_new_p:
+                if not (new_name and new_phone):
+                    st.warning("⚠️ Vui lòng nhập đầy đủ Họ tên và Số điện thoại!")
+                else:
+                    init_data = {
+                        "patient_name": new_name,
+                        "patient_phone": new_phone,
+                        "patient_age": new_age,
+                        "patient_job": new_job,
+                        "summary": "Khởi tạo hồ sơ hành chính ban đầu."
+                    }
+                    history_mgr.save_visit(new_phone, init_data)
+                    st.session_state.current_patient = {
+                        "name": new_name,
+                        "phone": new_phone,
+                        "age": new_age,
+                        "job": new_job
+                    }
+                    st.success(f"✅ Đã tạo và lưu thành công hồ sơ cho bệnh nhân **{new_name}**! Bạn có thể chuyển sang Tab 3 để tiến hành khám.")
+
 # ------------------------------------------
-# MỤC 2: CƠ SỞ TRI THỨC LÂM SÀNG (THẰNG SỐ 3)
+# TAB 2: CƠ SỞ TRI THỨC LÂM SÀNG (PHIÊN BẢN CẨM NANG CHI TIẾT)
 # ------------------------------------------
 with tab2:
-    st.subheader("📖 Cơ sở Tri thức Lâm sàng & Bệnh lý")
-    st.markdown("Tra cứu nhanh các tài liệu hướng dẫn và danh mục bệnh lý chuẩn hóa theo từng vùng cơ thể:")
+    st.subheader("📖 Cẩm nang Tri thức & Phác đồ Lâm sàng")
+    st.markdown("Tra cứu nội dung chuyên sâu chuẩn y khoa, cấu trúc giải phẫu và phác đồ PHCN từng vùng cơ thể:")
 
-    # Ô tìm kiếm kiến thức nhanh
-    search_knowledge_kw = st.text_input("🔍 Tìm kiếm kiến thức, bệnh lý, triệu chứng...", placeholder="Nhập từ khóa cần tra cứu...", key="search_knowledge_input")
+    search_knowledge_kw = st.text_input("🔍 Tra cứu nhanh kiến thức, hội chứng, thuật ngữ...", placeholder="Nhập từ khóa (Ví dụ: Viêm gân chóp xoay, Thoát vị đĩa đệm...)", key="search_knowledge_input")
 
     st.markdown("---")
-    st.markdown("##### 🗂️ Danh mục vùng cơ thể & Thần kinh")
+    st.markdown("##### 🗂️ Chọn vùng cơ thể & Chuyên khoa để đọc tài liệu")
 
-    # Chia các nút chọn vùng thành 3 cột đều nhau
     col_k1, col_k2, col_k3 = st.columns(3)
     knowledge_regions = [
         "Cột sống cổ", "Cột sống thắt lưng", "Khớp vai",
@@ -121,26 +159,136 @@ with tab2:
             if st.button(f"📌 {reg}", use_container_width=True, key=f"btn_knowledge_reg_{idx}"):
                 st.session_state.selected_knowledge_region = reg
 
-    # Hiển thị nội dung tri thức tương ứng khi người dùng bấm chọn vùng
     if "selected_knowledge_region" not in st.session_state:
         st.session_state.selected_knowledge_region = None
 
     if st.session_state.selected_knowledge_region:
+        reg_name = st.session_state.selected_knowledge_region
         st.markdown("---")
-        st.info(f"📂 Đang hiển thị tài liệu và danh mục bệnh lý cho vùng: **{st.session_state.selected_knowledge_region}**")
-        st.markdown(f"- **Tài liệu hướng dẫn chẩn đoán:** Cập nhật phác đồ chuẩn y khoa cho {st.session_state.selected_knowledge_region}.")
-        st.markdown(f"- **Danh mục bệnh lý thường gặp:** Liệt kê các hội chứng, tổn thương cấu trúc và chỉ định lượng giá.")
         
+        # Tiêu đề sách đọc
+        st.markdown(f"### 📚 SÁCH CHUYÊN KHOA: {reg_name.upper()}")
+        st.caption("Tài liệu huấn luyện và tra cứu nhanh lâm sàng Phục hồi chức năng vận động.")
+
+        # Cơ sở dữ liệu nội dung chi tiết dạng sách đọc cho từng vùng
+        knowledge_textbook_db = {
+            "Cột sống cổ": (
+                "1. Giải phẫu & Sinh cơ học cột sống cổ",
+                "Cột sống cổ gồm 7 đốt sống (C1-C7), chịu trách nhiệm nâng đỡ đầu và biên độ vận động lớn (gấp-duỗi, nghiêng, xoay). Đốt sống C1 (Atlas) và C2 (Axis) có cấu trúc đặc biệt cho phép biên độ xoay lớn nhất.",
+                "Hội chứng cổ - vai - gáy, thoái hóa đốt sống cổ, thoát vị đĩa đệm cổ chèn ép rễ thần kinh (C5-C8), hội chứng cơ bậc thang.",
+                "Đau lan dọc xuống tay, tê bì ngón tay (tùy rễ thần kinh tổn thương), hạn chế tầm vận động xoay cổ, co thắt cơ cạnh sống cổ.",
+                "Nghiệm pháp Spurling (nén ép cổ), Test kéo giãn cổ (Tensile test), Test Lhermitte (nếu nghi ngờ tổn thương tủy sống).",
+                "Giảm đau bằng vật lý trị liệu (nhiệt, điện xung, kéo giãn cột sống cổ bằng máy), tập mạnh nhóm cơ cổ sâu (Deep neck flexors), điều chỉnh tư thế làm việc."
+            ),
+            "Cột sống thắt lưng": (
+                "1. Giải phẫu & Sinh cơ học cột sống thắt lưng",
+                "Vùng thắt lưng gồm 5 đốt sống (L1-L5) chịu tải trọng lớn nhất của cơ thể. Đĩa đệm đóng vai trò giảm xóc. Góc ngả khung chậu (pelvic tilt) ảnh hưởng trực tiếp đến áp lực đĩa đệm.",
+                "Thoát vị đĩa đệm thắt lưng (L4-L5, L5-S1), trượt đốt sống (Spondylolisthesis), thoái hóa cột sống, hội chứng cơ hình lê (Piriformis syndrome).",
+                "Đau thắt lưng cấp hoặc mạn tính, đau lan truyền theo đường đi của thần kinh tọa (Sciatica) xuống mông, đùi, cẳng chân, bàn chân.",
+                "Nghiệm pháp Lasègue (Straight leg raise test), Test Bragard, Test Patrick (FABER), nghiệm pháp Schober đo độ giãn cột sống.",
+                "Nghỉ ngơi tương đối trong giai đoạn cấp, giảm đau (TENS, siêu âm), bài tập McKenzie (nếu hợp lý), tập mạnh cơ lõi (Core stability) như Plank, cầu nối."
+            ),
+            "Khớp vai": (
+                "1. Giải phẫu & Sinh cơ học khớp vai",
+                "Khớp vai là khớp ổ chảo - cầu có biên độ vận động lớn nhất cơ thể nhưng kém ổn định nhất, phụ thuộc lớn vào nhóm cơ chóp xoay (Rotator cuff: Supraspinatus, Infraspinatus, Teres minor, Subscapularis).",
+                "Hội chứng chạm mỏm cùng vai (Impingement syndrome), rách chóp xoay, viêm gân cơ nhị đầu, đông cứng khớp vai (Frozen shoulder / Adhesive capsulitis).",
+                "Đau nhói khi giơ tay qua đầu (đặc biệt trong góc từ 60-120 độ), cứng khớp toàn bộ biên độ (trong đông cứng), yếu lực cơ vai.",
+                "Test Neer, Test Hawkins-Kennedy (cho hội chứng va chạm), Test Jobe (cơ trên gai), Test Drop-arm (rách chóp xoay), đo tầm vận động ROM chủ động/thụ động.",
+                "Giai đoạn đau: Giảm đau, siêu âm, vận động tầm nhẹ nhàng không đau. Giai đoạn cứng: Kéo giãn bao khớp, tập Codman (lắc con lắc), phục hồi tầm vận động."
+            ),
+            "Khuỷu tay": (
+                "1. Giải phẫu & Sinh cơ học khuỷu tay",
+                "Khớp khuỷu gồm khớp ròng rọc-trụ, chỏm quay-lồi cầu và khớp quay-trụ gần. Cho phép cử động gấp-duỗi và sấp-ngửa cẳng tay.",
+                "Viêm lồi cầu ngoài xương cánh tay (Tennis elbow / Hướng cơ duỗi cổ tay), viêm lồi cầu trong (Golfer's elbow), hội chứng ống khuỷu (chèn ép thần kinh trụ).",
+                "Đau chói tại mỏm trên lồi cầu ngoài khi cầm nắm vật nặng, vắt khăn; tê ngón út và ngón áp út (trong chèn ép dây thần kinh trụ).",
+                "Test Mill (cho tennis elbow), Test Cozen, Test chèn ép dây thần kinh trụ tại rãnh ròng rọc khuỷu.",
+                "Nghỉ ngơi cơ duỗi cổ tay, dùng băng đeo hỗ trợ (Counterforce brace), siêu âm trị liệu, sóng xung kích (ESWT), bài tập eccentric cho cơ cổ tay."
+            ),
+            "Cổ tay – bàn tay": (
+                "1. Giải phẫu & Sinh cơ học cổ tay – bàn tay",
+                "Hệ thống ống cổ tay (Carpal tunnel) chứa dây thần kinh giữa và các gân gấp ngón tay. Phức hợp khớp cổ tay và các ngón tay đảm nhận chức năng cầm nắm tinh vi.",
+                "Hội chứng ống cổ tay (Carpal tunnel syndrome), viêm gân De Quervain (viêm bao hoạt dịch gân dạng dài và duỗi ngắn ngón cái), ngón tay lò xo (Trigger finger).",
+                "Tê bì, châm chích các ngón 1, 2, 3 và nửa ngón 4 (về đêm); đau vùng mỏm trâm quay khi dạng ngón cái; hiện tượng kẹt ngón tay khi gấp duỗi.",
+                "Test Phalen, Test Tinel (cho hội chứng ống cổ tay), Test Finkelstein (cho De Quervain).",
+                "Nẹp cổ tay ban đêm (đặc biệt trong hội chứng ống cổ tay), vật lý trị liệu giảm viêm, siêu âm, bài tập trượt gân (Tendon gliding exercises)."
+            ),
+            "Khớp háng": (
+                "1. Giải phẫu & Sinh cơ học khớp háng",
+                "Khớp háng là khớp chỏm cầu chịu lực lớn, có cấu trúc ổ cối sâu giúp tăng vững cho chi dưới khi đứng và di chuyển.",
+                "Thoái hóa khớp háng, viêm bao hoạt dịch mấu chuyển, hội chứng kẹp háng (FAI - Femoroacetabular impingement), căng cơ gập háng.",
+                "Đau sâu vùng bẹn hoặc mấu chuyển lớn, lan xuống đùi trước, hạn chế động tác xoay trong và dạng khớp háng.",
+                "Test Patrick (FABER), Test FADIR (cho kẹp háng), đánh giá tầm vận động gập - xoay khớp háng.",
+                "Giảm tải trọng lực, tập mạnh cơ mông nhỡ và cơ tứ đầu đùi, cải thiện tầm vận động khớp háng không chịu lực."
+            ),
+            "Khớp gối": (
+                "1. Giải phẫu & Sinh cơ học khớp gối",
+                "Khớp bản lề lớn chịu lực toàn thân, được hỗ trợ bởi hệ thống dây chằng chéo trước/sau (ACL/PCL), dây chằng bên (MCL/LCL) và sụn chêm trong/ngoài.",
+                "Tổn thương dây chằng chéo trước (ACL), rách sụn chêm, hội chứng đau bánh chè - đùi (Patellofemoral pain syndrome), thoái hóa khớp gối (Gonarthrosis).",
+                "Lỏng gối, sưng nề tràn dịch sau chấn thương, tiếng lạo xạo khi leo cầu thang, đau phía trước gối khi ngồi lâu.",
+                "Test ngăn kéo trước/sau (Anterior/Posterior drawer test), Test Lachman, Test McMurray (cho sụn chêm), Test Appley.",
+                "Kiểm soát sưng nề, tập gồng cơ tứ đầu đùi sớm, phục hồi tầm vận động duỗi thẳng gối tuyệt đối, tập mạnh cơ tứ đầu và cơ khoeo."
+            ),
+            "Cổ chân – bàn chân": (
+                "1. Giải phẫu & Sinh cơ học cổ chân – bàn chân",
+                "Khớp cổ chân (taler) chịu lực tì đè và thích nghi với mọi địa hình mặt phẳng. Hệ thống dây chằng bên ngoài (đặc biệt dây chằng sên - mác trước) hay bị tổn thương nhất.",
+                "Bong gân cổ chân (Ankle sprain - chủ yếu lật miết ngoài), viêm gân gót (Achilles tendinitis), viêm cân gan chân (Plantar fasciitis).",
+                "Sưng nề, bầm tím vùng mắt cá ngoài sau chấn thương; đau nhói vùng gót chân vào buổi sáng khi bước chân xuống giường.",
+                "Test ngăn kéo trước cổ chân (Anterior drawer test at ankle), Test Talar tilt, nghiệm pháp ép bắp chân (Thompson test cho đứt gân gót).",
+                "Nguyên tắc R.I.C.E trong giai đoạn cấp bong gân; bài tập kéo giãn cân gan chân, lăn bóng dưới lòng bàn chân và tập mạnh cơ mác (peroneal muscles)."
+            ),
+            "Thần kinh & Khác": (
+                "1. Tổng quan Phục hồi chức năng Thần kinh",
+                "Phục hồi chức năng thần kinh dựa trên nguyên tắc **Neuroplasticity (Tính dẻo thần kinh)** của não bộ, giúp tái cấu trúc và hình thành các đường dẫn truyền thần kinh mới sau tổn thương.",
+                "Tai biến mạch máu não (Stroke / Đột quỵ), tổn thương tủy sống, bệnh lý Parkinson, bại não (Cerebral palsy), hội chứng Guillain-Barré.",
+                "Liệt nửa người (Hemiplegia), liệt hai chi dưới, rối loạn thăng bằng, rối loạn nuốt (Dysphagia), thất ngôn (Aphasia).",
+                "Đánh giá thang điểm Fugl-Meyer (đánh giá vận động), thang điểm NIHSS, đánh giá trương lực cơ theo thang Modified Ashworth.",
+                "Ứng dụng kỹ thuật PNF, liệu pháp vận động cưỡng bức (CI Therapy), tập thăng bằng trên bóng, phục hồi chức năng nuốt và ngôn ngữ."
+            )
+        }
+
+        # Lấy nội dung chi tiết tương ứng
+        content = knowledge_textbook_db.get(reg_name, (
+            "1. Tổng quan chuyên khảo",
+            "Nội dung đang được cập nhật theo phác đồ chuẩn y khoa.",
+            "Các hội chứng thường gặp và tổn thương cấu trúc liên quan.",
+            "Triệu chứng lâm sàng điển hình và biểu hiện cơ năng, thực thể.",
+            "Hệ thống nghiệm pháp, test đặc hiệu khám lâm sàng chuyên sâu.",
+            "Phác đồ điều trị vật lý trị liệu và phục hồi chức năng vận động toàn diện."
+        ))
+
+        sec_title, intro, pathology, symptoms, tests, treatment = content
+
+        # Trình bày giao diện như một cuốn sách đọc chuyên khoa
+        st.markdown(f"#### 📖 {sec_title}")
+        st.info(intro)
+
+        with st.expander("📌 2. Các hội chứng & Bệnh lý thường gặp", expanded=True):
+            st.markdown(pathology)
+
+        with st.expander("🩺 3. Triệu chứng lâm sàng & Biểu hiện", expanded=True):
+            st.markdown(symptoms)
+
+        with st.expander("🔍 4. Hệ thống Test đặc hiệu & Nghiệm pháp", expanded=True):
+            st.markdown(tests)
+
+        with st.expander("⚙️ 5. Phác đồ Vật lý trị liệu & PHCN", expanded=True):
+            st.markdown(treatment)
+
+        st.markdown("---")
         if st.button("🔄 Đóng / Chọn vùng khác", key="reset_knowledge_reg"):
             st.session_state.selected_knowledge_region = None
             st.rerun()
+
+    else:
+        st.info("👆 Vui lòng bấm chọn một vùng cơ thể hoặc chuyên khoa ở phía trên để mở cẩm nang tài liệu chi tiết.")
 
     st.markdown("---")
     st.markdown("##### 📚 Tài liệu tham khảo y khoa chuẩn hóa")
     st.caption("• Hướng dẫn chẩn đoán và điều trị phục hồi chức năng vận động toàn diện.")
     st.caption("• Cẩm nang nghiệm pháp đặc hiệu cơ xương khớp và thần kinh.")
+
 # ------------------------------------------
-# MỤC 3: CHỌN VÙNG & NHẬP LIỆU THĂM KHÁM (HOÀN THIỆN)
+# TAB 3: CHỌN VÙNG & NHẬP LIỆU THĂM KHÁM
 # ------------------------------------------
 with tab3:
     st.subheader("🎯 Bước 1: Chọn vùng thăm khám lâm sàng")
@@ -161,34 +309,34 @@ with tab3:
         with col_target:
             if st.button(f"📌 {reg}", use_container_width=True, key=f"btn_choose_reg_{idx}"):
                 st.session_state.selected_region = reg
-                # Reset lại dữ liệu form tạm khi đổi vùng khám mới
                 st.session_state.exam_data_cache = {}
 
     if st.session_state.selected_region:
         st.markdown("---")
         st.success(f"📍 Đang thực hiện khám cho vùng: **{st.session_state.selected_region}**")
 
-        # Khởi tạo kho lưu trữ tạm trong session_state nếu chưa có
         if "exam_data_cache" not in st.session_state:
             st.session_state.exam_data_cache = {}
+
+        active_patient = st.session_state.get("current_patient", {"name": "", "phone": "", "age": 1990, "job": ""})
+        if active_patient.get("name"):
+            st.info(f"🔗 Đang liên kết với bệnh nhân: **{active_patient.get('name')}** (SĐT: {active_patient.get('phone')})")
 
         with st.form(key="independent_exam_form"):
             st.markdown("#### 📋 Bước 2: Nhập liệu thăm khám độc lập")
             
-            # Thông tin hành chính
             col_p1, col_p2 = st.columns(2)
             with col_p1:
-                patient_name = st.text_input("Họ tên bệnh nhân:", value=st.session_state.exam_data_cache.get("patient_name", ""), placeholder="Nhập họ tên...")
-                patient_phone = st.text_input("Số điện thoại / Mã BN:", value=st.session_state.exam_data_cache.get("patient_phone", ""), placeholder="Nhập SĐT...")
+                patient_name = st.text_input("Họ tên bệnh nhân:", value=active_patient.get("name", ""), placeholder="Nhập họ tên...")
+                patient_phone = st.text_input("Số điện thoại / Mã BN:", value=active_patient.get("phone", ""), placeholder="Nhập SĐT...")
             with col_p2:
-                patient_age = st.number_input("Năm sinh:", min_value=1900, max_value=2026, value=st.session_state.exam_data_cache.get("patient_age", 1990))
-                patient_job = st.text_input("Nghề nghiệp:", value=st.session_state.exam_data_cache.get("patient_job", ""), placeholder="Nhập nghề nghiệp...")
+                patient_age = st.number_input("Năm sinh:", min_value=1900, max_value=2026, value=int(active_patient.get("age", 1990)))
+                patient_job = st.text_input("Nghề nghiệp:", value=active_patient.get("job", ""), placeholder="Nhập nghề nghiệp...")
 
             st.markdown("---")
             ly_do_vao_vien = st.text_input("🏥 Lý do vào viện:", value=st.session_state.exam_data_cache.get("ly_do_vao_vien", ""), placeholder="Nhập lý do vào viện...")
             tien_su = st.text_area("📜 Tiền sử bệnh (Bản thân / Gia đình):", value=st.session_state.exam_data_cache.get("tien_su", ""), placeholder="Nhập tiền sử...")
 
-            # Bệnh sử SOCRATES
             with st.expander("🩺 Bệnh sử (SOCRATES)", expanded=True):
                 site = st.text_input("S – Vị trí đau:", value=st.session_state.selected_region)
                 onset = st.text_input("O – Khởi phát:", value=st.session_state.exam_data_cache.get("onset", ""), placeholder="Hoàn cảnh khởi phát...")
@@ -203,20 +351,17 @@ with tab3:
                 with col_nrs2:
                     nrs_note = st.text_input("Ghi chú mức độ đau:", value=st.session_state.exam_data_cache.get("nrs_note", ""), placeholder="Mô tả thêm...")
 
-            # Khám thực thể tinh gọn (Nhìn - Sờ - Gõ)
             with st.expander("🔍 Khám thực thể (Nhìn - Sờ - Gõ)", expanded=True):
                 inspect_note = st.text_input("👁️ Nhìn (Inspection):", value=st.session_state.exam_data_cache.get("inspect_note", ""), placeholder="Biến dạng, sưng nề, lệch vẹo...")
                 palp_note = st.text_input("✋ Sờ (Palpation):", value=st.session_state.exam_data_cache.get("palp_note", ""), placeholder="Điểm đau, nhiệt độ da, trương lực...")
                 per_meas_note = st.text_input("📏 Gõ / Đo (Percussion):", value=st.session_state.exam_data_cache.get("per_meas_note", ""), placeholder="Tầm vận động ROM, phản xạ...")
 
-            # 3-4 Test đặc hiệu
             with st.expander("👤 3-4 Test đặc hiệu / Nghiệm pháp", expanded=True):
                 t1 = st.checkbox("Test đặc hiệu 1 (+ Dương tính)", value=st.session_state.exam_data_cache.get("t1", False))
                 t2 = st.checkbox("Test đặc hiệu 2 (+ Dương tính)", value=st.session_state.exam_data_cache.get("t2", False))
                 t3 = st.checkbox("Test đặc hiệu 3 (+ Dương tính)", value=st.session_state.exam_data_cache.get("t3", False))
                 test_note = st.text_input("Ghi chú thêm về test lâm sàng:", value=st.session_state.exam_data_cache.get("test_note", ""), placeholder="Mô tả kết quả nghiệm pháp...")
 
-            # Cờ đỏ an toàn & Tệp đính kèm
             with st.expander("🚩 Cờ đỏ an toàn & Tệp đính kèm"):
                 rf_1 = st.checkbox("Hội chứng đuôi ngựa / Rối loạn tiểu tiện", value=st.session_state.exam_data_cache.get("rf_1", False))
                 rf_2 = st.checkbox("Sụt cân / Nghi ngờ ác tính", value=st.session_state.exam_data_cache.get("rf_2", False))
@@ -224,7 +369,6 @@ with tab3:
 
             submitted = st.form_submit_button("🚀 Xác nhận & Lưu dữ liệu tạm", use_container_width=True)
             if submitted:
-                # Lưu toàn bộ vào session_state cache để đồng bộ hiển thị sang phần phân tích bên dưới
                 st.session_state.exam_data_cache = {
                     "patient_name": patient_name,
                     "patient_phone": patient_phone,
@@ -248,7 +392,6 @@ with tab3:
                 }
                 st.success("✅ Đã ghi nhận và cập nhật thông tin thăm khám thành công!")
 
-        # Phân tích chẩn đoán & PHCN AI (Đọc dữ liệu an toàn từ cache)
         cached_data = st.session_state.get("exam_data_cache", {})
         
         st.markdown("---")
@@ -289,12 +432,15 @@ with tab3:
                 visit_data = {
                     "patient_name": p_name,
                     "patient_phone": p_phone,
+                    "patient_age": cached_data.get("patient_age", 1990),
+                    "patient_job": cached_data.get("patient_job", ""),
                     "summary": exam_summary
                 }
                 history_mgr.save_visit(p_phone, visit_data)
                 st.success(f"✅ Đã lưu thành công hồ sơ cho bệnh nhân **{p_name}** vào hệ thống lịch sử!")
     else:
         st.info("👆 Vui lòng bấm chọn một vùng cơ thể ở phía trên để bắt đầu quy trình khám.")
+
 # ------------------------------------------
 # MỤC 4: KHO BÀI TẬP PHCN CHUYÊN SÂU (THẰNG SỐ 5 - CHI TIẾT 7 BÀI TẬP)
 # ------------------------------------------
