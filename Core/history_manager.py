@@ -1,45 +1,53 @@
-# Core/history_manager.py
+# =========================================================
+# HISTORY MANAGER: QUẢN LÝ LỊCH SỬ BỆNH ÁN (AN TOÀN TRÊN CLOUD)
+# =========================================================
 import os
 import json
-import datetime
 
 class HistoryManager:
     def __init__(self, history_file="patient_history.json"):
+        # Đảm bảo đường dẫn tệp nằm đúng trong thư mục làm việc hiện tại
         self.history_file = os.path.abspath(history_file)
-        if not os.path.exists(self.history_file):
-            try:
+        self.ensure_file()
+
+    def ensure_file(self):
+        """Kiểm tra và tạo tệp lịch sử nếu chưa tồn tại"""
+        try:
+            directory = os.path.dirname(self.history_file)
+            if directory and not os.path.exists(directory):
+                os.makedirs(directory, exist_ok=True)
+                
+            if not os.path.exists(self.history_file) or os.path.getsize(self.history_file) == 0:
                 with open(self.history_file, "w", encoding="utf-8") as f:
                     json.dump([], f, ensure_ascii=False, indent=4)
-            except Exception:
-                pass
+        except Exception as e:
+            print(f"Lỗi khởi tạo tệp lịch sử: {e}")
 
-    def get_patient_history(self, phone):
-        if not phone:
-            return []
-        try:
-            if not os.path.exists(self.history_file):
-                return []
-            with open(self.history_file, "r", encoding="utf-8") as f:
-                history = json.load(f)
-            return [v for v in history if v.get("patient_phone") == phone]
-        except Exception:
-            return []
-
-    def save_visit(self, phone, visit_data):
+    def get_all_history(self):
+        """Lấy toàn bộ danh sách lịch sử"""
         try:
             if os.path.exists(self.history_file):
                 with open(self.history_file, "r", encoding="utf-8") as f:
-                    history = json.load(f)
-            else:
-                history = []
-        except Exception:
-            history = []
-
-        visit_data["date"] = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
-        history.append(visit_data)
-
-        try:
-            with open(self.history_file, "w", encoding="utf-8") as f:
-                json.dump(history, f, ensure_ascii=False, indent=4)
+                    return json.load(f)
         except Exception:
             pass
+        return []
+
+    def get_patient_history(self, phone):
+        """Lấy danh sách lịch sử khám của một bệnh nhân theo số điện thoại"""
+        all_data = self.get_all_history()
+        patient_records = [item for item in all_data if item.get("patient_phone") == phone]
+        return patient_records
+
+    def save_visit(self, phone, visit_data):
+        """Lưu một lần khám mới vào tệp JSON"""
+        try:
+            all_data = self.get_all_history()
+            from datetime import datetime
+            visit_data["date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            all_data.insert(0, visit_data) # Đưa lần khám mới nhất lên đầu
+            
+            with open(self.history_file, "w", encoding="utf-8") as f:
+                json.dump(all_data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f"Lỗi lưu lịch sử: {e}")
