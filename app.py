@@ -1,75 +1,50 @@
-# app.py - PHCN AI 1.8
+# =========================================================
+# PHCN AI 1.8 - TRỢ LÝ LÂM SÀNG PHỤC HỒI CHỨC NĂNG
+# =========================================================
 import streamlit as st
-import os
-import json
 import datetime
-import pandas as pd
 
-# Cấu hình giao diện tối ưu cho mobile
 st.set_page_config(
     page_title="PHCN AI 1.8 - Trợ lý lâm sàng PHCN",
     page_icon="🩺",
     layout="centered"
 )
 
-# --- QUẢN LÝ LỊCH SỬ KHÁM TRỰC TIẾP TẠI GỐC ---
+# Khởi tạo SimpleHistoryManager giả lập hoặc import thực tế của bạn
 class SimpleHistoryManager:
-    def __init__(self, history_file="patient_history.json"):
-        self.history_file = os.path.abspath(history_file)
-        if not os.path.exists(self.history_file):
-            try:
-                with open(self.history_file, "w", encoding="utf-8") as f:
-                    json.dump([], f, ensure_ascii=False, indent=4)
-            except Exception:
-                pass
-
+    def __init__(self):
+        if "db_history" not in st.session_state:
+            st.session_state.db_history = {}
+            
     def get_patient_history(self, phone):
-        if not phone:
-            return []
-        try:
-            if not os.path.exists(self.history_file):
-                return []
-            with open(self.history_file, "r", encoding="utf-8") as f:
-                history = json.load(f)
-            return [v for v in history if v.get("patient_phone") == phone]
-        except Exception:
-            return []
+        return st.session_state.db_history.get(phone, [])
+        
+    def save_visit(self, phone, data):
+        if phone not in st.session_state.db_history:
+            st.session_state.db_history[phone] = []
+        data["date"] = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+        st.session_state.db_history[phone].insert(0, data)
 
-    def save_visit(self, phone, visit_data):
-        try:
-            if os.path.exists(self.history_file):
-                with open(self.history_file, "r", encoding="utf-8") as f:
-                    history = json.load(f)
-            else:
-                history = []
-        except Exception:
-            history = []
+if "history_mgr" not in st.session_state:
+    st.session_state.history_mgr = SimpleHistoryManager()
 
-        visit_data["date"] = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
-        history.append(visit_data)
+history_mgr = st.session_state.history_mgr
 
-        try:
-            with open(self.history_file, "w", encoding="utf-8") as f:
-                json.dump(history, f, ensure_ascii=False, indent=4)
-        except Exception:
-            pass
-
-history_mgr = SimpleHistoryManager()
-
-# --- HEADER & THANH ĐIỀU HƯỚNG CHÍNH (4 MỤC) ---
+# Tiêu đề ứng dụng
 st.markdown("### 🩺 PHCN AI 1.8")
-st.caption("Trợ lý lâm sàng Phục hồi chức năng & Vật lý trị liệu")
+st.caption("Trợ lý lâm sàng Phục hồi chức năng & Vật lý trị liệu toàn diện")
 
-# Tạo 4 tab chính theo đúng yêu cầu
+# Thanh điều hướng 4 tab chính
 tab1, tab2, tab3, tab4 = st.tabs([
     "1. Hồ sơ", 
     "2. Tri thức", 
-    "3. Chọn vùng & Khám", 
-    "4. Phục hồi chức năng"
+    "3. Khám", 
+    "4. PHCN"
 ])
-# ------------------------------------------
-# TAB 1: HỒ SƠ BỆNH NHÂN, LỊCH SỬ & THÊM MỚI
-# ------------------------------------------
+
+# =========================================================
+# TAB 1: QUẢN LÝ HỒ SƠ, LỊCH SỬ & THÊM MỚI BỆNH NHÂN
+# =========================================================
 with tab1:
     st.subheader("👤 Quản lý Hồ sơ, Lịch sử & Thêm mới Bệnh nhân")
     
@@ -132,122 +107,140 @@ with tab1:
                         "age": new_age,
                         "job": new_job
                     }
-                    st.success(f"✅ Đã tạo và lưu thành công hồ sơ cho bệnh nhân **{new_name}**! Bạn có thể chuyển sang Tab 3 để tiến hành khám.")
+                    st.success(f"✅ Đã tạo và lưu thành công hồ sơ cho bệnh nhân **{new_name}**! Bạn có thể chuyển sang Tab Khám để tiếp tục.")
 
-# ------------------------------------------
-# TAB 2: CƠ SỞ TRI THỨC LÂM SÀNG (PHIÊN BẢN CẨM NANG CHI TIẾT)
-# ------------------------------------------
+
+# =========================================================
+# TAB 2: CƠ SỞ TRI THỨC LÂM SÀNG (GIAO DIỆN LƯỚI ICON & CHUYỂN TRANG)
+# =========================================================
 with tab2:
-    st.subheader("📖 Cẩm nang Tri thức & Phác đồ Lâm sàng")
-    st.markdown("Tra cứu nội dung chuyên sâu chuẩn y khoa, cấu trúc giải phẫu và phác đồ PHCN từng vùng cơ thể:")
+    if "kb_detail_page" not in st.session_state:
+        st.session_state.kb_detail_page = None
 
-    search_knowledge_kw = st.text_input("🔍 Tra cứu nhanh kiến thức, hội chứng, thuật ngữ...", placeholder="Nhập từ khóa (Ví dụ: Viêm gân chóp xoay, Thoát vị đĩa đệm...)", key="search_knowledge_input")
+    if st.session_state.kb_detail_page is None:
+        st.subheader("📖 Cẩm nang Tri thức & Phác đồ Lâm sàng")
+        st.markdown("Chọn một chuyên khoa bên dưới để xem tài liệu chi tiết[span_2](start_span)[span_2](end_span):")
 
-    st.markdown("---")
-    st.markdown("##### 🗂️ Chọn vùng cơ thể & Chuyên khoa để đọc tài liệu")
+        search_knowledge_kw = st.text_input("🔍 Tìm kiếm nhanh bệnh lý, triệu chứng...", placeholder="Nhập từ khóa...", key="search_knowledge_input")
 
-    col_k1, col_k2, col_k3 = st.columns(3)
-    knowledge_regions = [
-        "Cột sống cổ", "Cột sống thắt lưng", "Khớp vai",
-        "Khuỷu tay", "Cổ tay – bàn tay", "Khớp háng",
-        "Khớp gối", "Cổ chân – bàn chân", "Thần kinh & Khác"
-    ]
-    
-    for idx, reg in enumerate(knowledge_regions):
-        col_target = [col_k1, col_k2, col_k3][idx % 3]
-        with col_target:
-            if st.button(f"📌 {reg}", use_container_width=True, key=f"btn_knowledge_reg_{idx}"):
-                st.session_state.selected_knowledge_region = reg
-
-    if "selected_knowledge_region" not in st.session_state:
-        st.session_state.selected_knowledge_region = None
-
-    if st.session_state.selected_knowledge_region:
-        reg_name = st.session_state.selected_knowledge_region
         st.markdown("---")
-        
-        # Tiêu đề sách đọc
-        st.markdown(f"### 📚 SÁCH CHUYÊN KHOA: {reg_name.upper()}")
+        st.markdown("##### 🗂️ Danh mục chuyên khoa & Vùng cơ thể")
+
+        knowledge_items = [
+            ("Cột sống cổ", "🦴", "C1-C7 và hội chứng chèn ép"),
+            ("Cột sống thắt lưng", "🩻", "Thoát vị đĩa đệm, đau thần kinh tọa"),
+            ("Khớp vai", "🦾", "Chóp xoay & đông cứng khớp vai"),
+            ("Khuỷu tay", "💪", "Viêm lồi cầu, hội chứng ống khuỷu"),
+            ("Cổ tay – bàn tay", "✋", "Hội chứng ống cổ tay, De Quervain"),
+            ("Khớp háng", "🦿", "Thoái hóa & kẹp háng FAI"),
+            ("Khớp gối", "🦵", "ACL, sụn chêm & thoái hóa gối"),
+            ("Cổ chân – bàn chân", "🦶", "Bong gân & viêm cân gan chân"),
+            ("Thần kinh & Khác", "🧠", "Đột quỵ, phục hồi chức năng thần kinh")
+        ]
+
+        cols = st.columns(3)
+        for idx, item in enumerate(knowledge_items):
+            title, icon, desc = item
+            col_target = cols[idx % 3]
+            with col_target:
+                with st.container(border=True):
+                    st.markdown(f"<h3 style='text-align: center; margin: 0;'>{icon}</h3>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='text-align: center; font-weight: bold; margin: 5px 0;'>{title}</p>", unsafe_allow_html=True)
+                    st.caption(desc)
+                    if st.button("📖 Đọc sách", use_container_width=True, key=f"open_kb_{idx}"):
+                        st.session_state.kb_detail_page = title
+                        st.rerun()
+
+        st.markdown("---")
+        st.caption("📚 Hệ thống tài liệu y khoa chuẩn hóa phục vụ chẩn đoán và điều trị PHCN.")
+
+    else:
+        current_region = st.session_state.kb_detail_page
+
+        if st.button("⬅️ Quay lại danh mục", type="secondary", key="back_to_grid_kb"):
+            st.session_state.kb_detail_page = None
+            st.rerun()
+
+        st.markdown("---")
+        st.subheader(f"📚 SÁCH CHUYÊN KHOA: {current_region.upper()}")
         st.caption("Tài liệu huấn luyện và tra cứu nhanh lâm sàng Phục hồi chức năng vận động.")
 
-        # Cơ sở dữ liệu nội dung chi tiết dạng sách đọc cho từng vùng
         knowledge_textbook_db = {
             "Cột sống cổ": (
                 "1. Giải phẫu & Sinh cơ học cột sống cổ",
-                "Cột sống cổ gồm 7 đốt sống (C1-C7), chịu trách nhiệm nâng đỡ đầu và biên độ vận động lớn (gấp-duỗi, nghiêng, xoay). Đốt sống C1 (Atlas) và C2 (Axis) có cấu trúc đặc biệt cho phép biên độ xoay lớn nhất.",
-                "Hội chứng cổ - vai - gáy, thoái hóa đốt sống cổ, thoát vị đĩa đệm cổ chèn ép rễ thần kinh (C5-C8), hội chứng cơ bậc thang.",
-                "Đau lan dọc xuống tay, tê bì ngón tay (tùy rễ thần kinh tổn thương), hạn chế tầm vận động xoay cổ, co thắt cơ cạnh sống cổ.",
-                "Nghiệm pháp Spurling (nén ép cổ), Test kéo giãn cổ (Tensile test), Test Lhermitte (nếu nghi ngờ tổn thương tủy sống).",
-                "Giảm đau bằng vật lý trị liệu (nhiệt, điện xung, kéo giãn cột sống cổ bằng máy), tập mạnh nhóm cơ cổ sâu (Deep neck flexors), điều chỉnh tư thế làm việc."
+                "Cột sống cổ gồm 7 đốt sống (C1-C7), chịu trách nhiệm nâng đỡ đầu và biên độ vận động lớn (gấp-duỗi, nghiêng, xoay).",
+                "Hội chứng cổ - vai - gáy, thoái hóa đốt sống cổ, thoát vị đĩa đệm cổ chèn ép rễ thần kinh (C5-C8).",
+                "Đau lan dọc xuống tay, tê bì ngón tay, hạn chế tầm vận động xoay cổ.",
+                "Nghiệm pháp Spurling (nén ép cổ), Test kéo giãn cổ, Test Lhermitte.",
+                "Giảm đau bằng vật lý trị liệu, kéo giãn cột sống cổ, tập mạnh nhóm cơ cổ sâu."
             ),
             "Cột sống thắt lưng": (
                 "1. Giải phẫu & Sinh cơ học cột sống thắt lưng",
-                "Vùng thắt lưng gồm 5 đốt sống (L1-L5) chịu tải trọng lớn nhất của cơ thể. Đĩa đệm đóng vai trò giảm xóc. Góc ngả khung chậu (pelvic tilt) ảnh hưởng trực tiếp đến áp lực đĩa đệm.",
-                "Thoát vị đĩa đệm thắt lưng (L4-L5, L5-S1), trượt đốt sống (Spondylolisthesis), thoái hóa cột sống, hội chứng cơ hình lê (Piriformis syndrome).",
-                "Đau thắt lưng cấp hoặc mạn tính, đau lan truyền theo đường đi của thần kinh tọa (Sciatica) xuống mông, đùi, cẳng chân, bàn chân.",
-                "Nghiệm pháp Lasègue (Straight leg raise test), Test Bragard, Test Patrick (FABER), nghiệm pháp Schober đo độ giãn cột sống.",
-                "Nghỉ ngơi tương đối trong giai đoạn cấp, giảm đau (TENS, siêu âm), bài tập McKenzie (nếu hợp lý), tập mạnh cơ lõi (Core stability) như Plank, cầu nối."
+                "Vùng thắt lưng gồm 5 đốt sống (L1-L5) chịu tải trọng lớn nhất của cơ thể. Đĩa đệm đóng vai trò giảm xóc.",
+                "Thoát vị đĩa đệm thắt lưng (L4-L5, L5-S1), trượt đốt sống, hội chứng cơ hình lê.",
+                "Đau thắt lưng cấp/mạn, đau lan truyền theo dây thần kinh tọa xuống chân.",
+                "Nghiệm pháp Lasègue, Test Bragard, Test Patrick (FABER).",
+                "Nghỉ ngơi giai đoạn cấp, giảm đau (TENS), bài tập McKenzie, tập cơ lõi (Core stability)."
             ),
             "Khớp vai": (
                 "1. Giải phẫu & Sinh cơ học khớp vai",
-                "Khớp vai là khớp ổ chảo - cầu có biên độ vận động lớn nhất cơ thể nhưng kém ổn định nhất, phụ thuộc lớn vào nhóm cơ chóp xoay (Rotator cuff: Supraspinatus, Infraspinatus, Teres minor, Subscapularis).",
-                "Hội chứng chạm mỏm cùng vai (Impingement syndrome), rách chóp xoay, viêm gân cơ nhị đầu, đông cứng khớp vai (Frozen shoulder / Adhesive capsulitis).",
-                "Đau nhói khi giơ tay qua đầu (đặc biệt trong góc từ 60-120 độ), cứng khớp toàn bộ biên độ (trong đông cứng), yếu lực cơ vai.",
-                "Test Neer, Test Hawkins-Kennedy (cho hội chứng va chạm), Test Jobe (cơ trên gai), Test Drop-arm (rách chóp xoay), đo tầm vận động ROM chủ động/thụ động.",
-                "Giai đoạn đau: Giảm đau, siêu âm, vận động tầm nhẹ nhàng không đau. Giai đoạn cứng: Kéo giãn bao khớp, tập Codman (lắc con lắc), phục hồi tầm vận động."
+                "Khớp vai có biên độ vận động lớn nhất cơ thể nhưng kém ổn định, phụ thuộc lớn vào nhóm cơ chóp xoay.",
+                "Hội chứng chạm mỏm cùng vai, rách chóp xoay, đông cứng khớp vai (Frozen shoulder).",
+                "Đau nhói khi giơ tay qua đầu, cứng khớp toàn bộ biên độ.",
+                "Test Neer, Test Hawkins-Kennedy, Test Jobe, Test Drop-arm.",
+                "Giảm đau, siêu âm, kéo giãn bao khớp, tập vận động tầm nhẹ nhàng không đau."
             ),
             "Khuỷu tay": (
                 "1. Giải phẫu & Sinh cơ học khuỷu tay",
-                "Khớp khuỷu gồm khớp ròng rọc-trụ, chỏm quay-lồi cầu và khớp quay-trụ gần. Cho phép cử động gấp-duỗi và sấp-ngửa cẳng tay.",
-                "Viêm lồi cầu ngoài xương cánh tay (Tennis elbow / Hướng cơ duỗi cổ tay), viêm lồi cầu trong (Golfer's elbow), hội chứng ống khuỷu (chèn ép thần kinh trụ).",
-                "Đau chói tại mỏm trên lồi cầu ngoài khi cầm nắm vật nặng, vắt khăn; tê ngón út và ngón áp út (trong chèn ép dây thần kinh trụ).",
-                "Test Mill (cho tennis elbow), Test Cozen, Test chèn ép dây thần kinh trụ tại rãnh ròng rọc khuỷu.",
-                "Nghỉ ngơi cơ duỗi cổ tay, dùng băng đeo hỗ trợ (Counterforce brace), siêu âm trị liệu, sóng xung kích (ESWT), bài tập eccentric cho cơ cổ tay."
+                "Khớp khuỷu gồm khớp ròng rọc-trụ, chỏm quay-lồi cầu, cho phép cử động gấp-duỗi và sấp-ngửa.",
+                "Viêm lồi cầu ngoài (Tennis elbow), viêm lồi cầu trong, hội chứng ống khuỷu.",
+                "Đau chói tại mỏm trên lồi cầu ngoài khi cầm nắm vật nặng, tê ngón út.",
+                "Test Mill, Test Cozen, Test chèn ép dây thần kinh trụ.",
+                "Nghỉ ngơi, dùng băng đeo hỗ trợ, siêu âm trị liệu, sóng xung kích (ESWT)."
             ),
             "Cổ tay – bàn tay": (
                 "1. Giải phẫu & Sinh cơ học cổ tay – bàn tay",
-                "Hệ thống ống cổ tay (Carpal tunnel) chứa dây thần kinh giữa và các gân gấp ngón tay. Phức hợp khớp cổ tay và các ngón tay đảm nhận chức năng cầm nắm tinh vi.",
-                "Hội chứng ống cổ tay (Carpal tunnel syndrome), viêm gân De Quervain (viêm bao hoạt dịch gân dạng dài và duỗi ngắn ngón cái), ngón tay lò xo (Trigger finger).",
-                "Tê bì, châm chích các ngón 1, 2, 3 và nửa ngón 4 (về đêm); đau vùng mỏm trâm quay khi dạng ngón cái; hiện tượng kẹt ngón tay khi gấp duỗi.",
-                "Test Phalen, Test Tinel (cho hội chứng ống cổ tay), Test Finkelstein (cho De Quervain).",
-                "Nẹp cổ tay ban đêm (đặc biệt trong hội chứng ống cổ tay), vật lý trị liệu giảm viêm, siêu âm, bài tập trượt gân (Tendon gliding exercises)."
+                "Hệ thống ống cổ tay chứa dây thần kinh giữa và các gân gấp ngón tay.",
+                "Hội chứng ống cổ tay, viêm gân De Quervain, ngón tay lò xo.",
+                "Tê bì các ngón 1, 2, 3 về đêm; đau vùng mỏm trâm quay.",
+                "Test Phalen, Test Tinel, Test Finkelstein.",
+                "Nẹp cổ tay ban đêm, siêu âm trị liệu, bài tập trượt gân."
             ),
             "Khớp háng": (
                 "1. Giải phẫu & Sinh cơ học khớp háng",
-                "Khớp háng là khớp chỏm cầu chịu lực lớn, có cấu trúc ổ cối sâu giúp tăng vững cho chi dưới khi đứng và di chuyển.",
-                "Thoái hóa khớp háng, viêm bao hoạt dịch mấu chuyển, hội chứng kẹp háng (FAI - Femoroacetabular impingement), căng cơ gập háng.",
-                "Đau sâu vùng bẹn hoặc mấu chuyển lớn, lan xuống đùi trước, hạn chế động tác xoay trong và dạng khớp háng.",
-                "Test Patrick (FABER), Test FADIR (cho kẹp háng), đánh giá tầm vận động gập - xoay khớp háng.",
-                "Giảm tải trọng lực, tập mạnh cơ mông nhỡ và cơ tứ đầu đùi, cải thiện tầm vận động khớp háng không chịu lực."
+                "Khớp háng là khớp chỏm cầu chịu lực lớn, ổ cối sâu giúp tăng vững cho chi dưới.",
+                "Thoái hóa khớp háng, viêm bao hoạt dịch mấu chuyển, hội chứng kẹp háng (FAI).",
+                "Đau sâu vùng bẹn hoặc mấu chuyển lớn, hạn chế xoay trong khớp háng.",
+                "Test Patrick (FABER), Test FADIR, đánh giá tầm vận động.",
+                "Giảm tải trọng lực, tập mạnh cơ mông nhỡ và cơ tứ đầu đùi."
             ),
             "Khớp gối": (
                 "1. Giải phẫu & Sinh cơ học khớp gối",
-                "Khớp bản lề lớn chịu lực toàn thân, được hỗ trợ bởi hệ thống dây chằng chéo trước/sau (ACL/PCL), dây chằng bên (MCL/LCL) và sụn chêm trong/ngoài.",
-                "Tổn thương dây chằng chéo trước (ACL), rách sụn chêm, hội chứng đau bánh chè - đùi (Patellofemoral pain syndrome), thoái hóa khớp gối (Gonarthrosis).",
-                "Lỏng gối, sưng nề tràn dịch sau chấn thương, tiếng lạo xạo khi leo cầu thang, đau phía trước gối khi ngồi lâu.",
-                "Test ngăn kéo trước/sau (Anterior/Posterior drawer test), Test Lachman, Test McMurray (cho sụn chêm), Test Appley.",
-                "Kiểm soát sưng nề, tập gồng cơ tứ đầu đùi sớm, phục hồi tầm vận động duỗi thẳng gối tuyệt đối, tập mạnh cơ tứ đầu và cơ khoeo."
+                "Khớp bản lề lớn chịu lực toàn thân, được hỗ trợ bởi hệ thống dây chằng (ACL, PCL, MCL, LCL) và sụn chêm.",
+                "Tổn thương ACL, rách sụn chêm, hội chứng đau bánh chè - đùi, thoái hóa khớp gối.",
+                "Lỏng gối, sưng nề sau chấn thương, tiếng lạo xạo khi leo cầu thang.",
+                "Test ngăn kéo trước/sau, Test Lachman, Test McMurray.",
+                "Kiểm soát sưng nề, tập gồng cơ tứ đầu đùi sớm, phục hồi tầm vận động."
             ),
             "Cổ chân – bàn chân": (
                 "1. Giải phẫu & Sinh cơ học cổ chân – bàn chân",
-                "Khớp cổ chân (taler) chịu lực tì đè và thích nghi với mọi địa hình mặt phẳng. Hệ thống dây chằng bên ngoài (đặc biệt dây chằng sên - mác trước) hay bị tổn thương nhất.",
-                "Bong gân cổ chân (Ankle sprain - chủ yếu lật miết ngoài), viêm gân gót (Achilles tendinitis), viêm cân gan chân (Plantar fasciitis).",
-                "Sưng nề, bầm tím vùng mắt cá ngoài sau chấn thương; đau nhói vùng gót chân vào buổi sáng khi bước chân xuống giường.",
-                "Test ngăn kéo trước cổ chân (Anterior drawer test at ankle), Test Talar tilt, nghiệm pháp ép bắp chân (Thompson test cho đứt gân gót).",
-                "Nguyên tắc R.I.C.E trong giai đoạn cấp bong gân; bài tập kéo giãn cân gan chân, lăn bóng dưới lòng bàn chân và tập mạnh cơ mác (peroneal muscles)."
+                "Khớp cổ chân chịu lực tì đè và thích nghi với mọi địa hình mặt phẳng.",
+                "Bong gân cổ chân, viêm gân gót (Achilles), viêm cân gan chân.",
+                "Sưng nề mắt cá ngoài, đau nhói gót chân vào buổi sáng.",
+                "Test ngăn kéo trước cổ chân, Test Talar tilt, Thompson test.",
+                "Nguyên tắc R.I.C.E giai đoạn cấp, kéo giãn cân gan chân, tập mạnh cơ mác."
             ),
             "Thần kinh & Khác": (
                 "1. Tổng quan Phục hồi chức năng Thần kinh",
-                "Phục hồi chức năng thần kinh dựa trên nguyên tắc **Neuroplasticity (Tính dẻo thần kinh)** của não bộ, giúp tái cấu trúc và hình thành các đường dẫn truyền thần kinh mới sau tổn thương.",
-                "Tai biến mạch máu não (Stroke / Đột quỵ), tổn thương tủy sống, bệnh lý Parkinson, bại não (Cerebral palsy), hội chứng Guillain-Barré.",
-                "Liệt nửa người (Hemiplegia), liệt hai chi dưới, rối loạn thăng bằng, rối loạn nuốt (Dysphagia), thất ngôn (Aphasia).",
-                "Đánh giá thang điểm Fugl-Meyer (đánh giá vận động), thang điểm NIHSS, đánh giá trương lực cơ theo thang Modified Ashworth.",
-                "Ứng dụng kỹ thuật PNF, liệu pháp vận động cưỡng bức (CI Therapy), tập thăng bằng trên bóng, phục hồi chức năng nuốt và ngôn ngữ."
+                "Dựa trên nguyên tắc Neuroplasticity (Tính dẻo thần kinh) của não bộ sau tổn thương.",
+                "Tai biến mạch máu não (Stroke), tổn thương tủy sống, Parkinson, bại não.",
+                "Liệt nửa người, rối loạn thăng bằng, rối loạn nuốt, thất ngôn.",
+                "Thang điểm Fugl-Meyer, NIHSS, Modified Ashworth.",
+                "Ứng dụng PNF, liệu pháp vận động cưỡng bức, tập thăng bằng trên bóng."
             )
         }
 
-        # Lấy nội dung chi tiết tương ứng
-        content = knowledge_textbook_db.get(reg_name, (
+        content = knowledge_textbook_db.get(current_region, (
             "1. Tổng quan chuyên khảo",
             "Nội dung đang được cập nhật theo phác đồ chuẩn y khoa.",
             "Các hội chứng thường gặp và tổn thương cấu trúc liên quan.",
@@ -258,7 +251,6 @@ with tab2:
 
         sec_title, intro, pathology, symptoms, tests, treatment = content
 
-        # Trình bày giao diện như một cuốn sách đọc chuyên khoa
         st.markdown(f"#### 📖 {sec_title}")
         st.info(intro)
 
@@ -275,21 +267,14 @@ with tab2:
             st.markdown(treatment)
 
         st.markdown("---")
-        if st.button("🔄 Đóng / Chọn vùng khác", key="reset_knowledge_reg"):
-            st.session_state.selected_knowledge_region = None
+        if st.button("⬅️ Quay lại danh mục chuyên khoa", type="primary", key="bottom_back_btn"):
+            st.session_state.kb_detail_page = None
             st.rerun()
 
-    else:
-        st.info("👆 Vui lòng bấm chọn một vùng cơ thể hoặc chuyên khoa ở phía trên để mở cẩm nang tài liệu chi tiết.")
 
-    st.markdown("---")
-    st.markdown("##### 📚 Tài liệu tham khảo y khoa chuẩn hóa")
-    st.caption("• Hướng dẫn chẩn đoán và điều trị phục hồi chức năng vận động toàn diện.")
-    st.caption("• Cẩm nang nghiệm pháp đặc hiệu cơ xương khớp và thần kinh.")
-
-# ------------------------------------------
-# TAB 3: CHỌN VÙNG & NHẬP LIỆU THĂM KHÁM
-# ------------------------------------------
+# =========================================================
+# TAB 3: CHỌN VÙNG & NHẬP LIỆU THĂM KHÁM (AUTOFILL TỪ TAB 1)
+# =========================================================
 with tab3:
     st.subheader("🎯 Bước 1: Chọn vùng thăm khám lâm sàng")
     st.markdown("Nhấn chọn một vùng cơ thể bên dưới để mở giao diện nhập liệu thăm khám độc lập:")
@@ -441,49 +426,62 @@ with tab3:
     else:
         st.info("👆 Vui lòng bấm chọn một vùng cơ thể ở phía trên để bắt đầu quy trình khám.")
 
-# ------------------------------------------
-# MỤC 4: KHO BÀI TẬP PHCN CHUYÊN SÂU (THẰNG SỐ 5 - CHI TIẾT 7 BÀI TẬP)
-# ------------------------------------------
+
+# =========================================================
+# TAB 4: KHO BÀI TẬP PHCN CHUYÊN SÂU (GIAO DIỆN LƯỚI ICON & CHUYỂN TRANG)
+# =========================================================
 with tab4:
-    st.subheader("🏋️‍♂️ Kho Bài tập Phục hồi chức năng Chuyên sâu")
-    st.markdown("Tra cứu danh mục 9 nhóm bệnh lý chuyên khoa và hệ thống 7 bài tập chuẩn hóa lâm sàng cho từng nhóm:")
+    if "rehab_detail_page" not in st.session_state:
+        st.session_state.rehab_detail_page = None
 
-    # Ô tìm kiếm bài tập nhanh
-    search_ex_kw = st.text_input("🔍 Tìm kiếm bài tập, động tác, hội chứng...", placeholder="Nhập từ khóa (Ví dụ: Vẹo cột sống, Đột quỵ, Nuốt khó...)", key="search_exercise_input")
+    if st.session_state.rehab_detail_page is None:
+        st.subheader("🏋️‍♂️ Kho Bài tập Phục hồi chức năng Chuyên sâu")
+        st.markdown("Chọn nhóm bệnh lý chuyên khoa bên dưới để xem chi tiết 7 bài tập chuẩn hóa:")
 
-    st.markdown("---")
-    st.markdown("##### 🗂️ Chọn nhóm bệnh lý & Chuyên khoa PHCN")
+        search_ex_kw = st.text_input("🔍 Tìm kiếm bài tập, động tác, hội chứng...", placeholder="Nhập từ khóa (Ví dụ: Vẹo cột sống, Đột quỵ...)", key="search_exercise_input")
 
-    # Chia các nút chọn nhóm bệnh lý thành 3 cột đều nhau
-    col_e1, col_e2, col_e3 = st.columns(3)
-    rehab_groups = [
-        "Stroke (Đột quỵ)", 
-        "Dysphagia (Nuốt khó)", 
-        "Aphasia (Thất ngôn)",
-        "Dysarthria (Khó nói)", 
-        "Autism / Motor (Tự kỷ / VĐ)", 
-        "Torticollis (Vẹo cổ)",
-        "Vẹo cột sống (Scoliosis)", 
-        "Post-Op Knee / Hip (Mổ)", 
-        "Fracture (Gãy xương)"
-    ]
-    
-    for idx, grp in enumerate(rehab_groups):
-        col_target = [col_e1, col_e2, col_e3][idx % 3]
-        with col_target:
-            if st.button(f"📌 {grp}", use_container_width=True, key=f"btn_rehab_group_{idx}"):
-                st.session_state.selected_rehab_group = grp
-
-    # Khởi tạo session state cho nhóm bài tập
-    if "selected_rehab_group" not in st.session_state:
-        st.session_state.selected_rehab_group = None
-
-    if st.session_state.selected_rehab_group:
         st.markdown("---")
-        group_name = st.session_state.selected_rehab_group
-        st.success(f"📂 Danh mục 7 bài tập chuẩn hóa chuyên sâu cho nhóm: **{group_name}**")
+        st.markdown("##### 🗂️ Danh mục nhóm bệnh lý & Chuyên khoa PHCN")
 
-        # Định nghĩa cơ sở dữ liệu 7 bài tập chi tiết cho từng nhóm bệnh lý
+        rehab_items = [
+            ("Stroke (Đột quỵ)", "🧠", "Phục hồi vận động chi liệt & thăng bằng"),
+            ("Dysphagia (Nuốt khó)", "💧", "Kỹ thuật nuốt & cơ vùng miệng họng"),
+            ("Aphasia (Thất ngôn)", "🗣️", "Kích thích ngôn ngữ & giao tiếp"),
+            ("Dysarthria (Khó nói)", "🗣️", "Kiểm soát phát âm & hơi thở"),
+            ("Autism / Motor (Tự kỷ / VĐ)", "🧩", "Điều hòa cảm giác & vận động thô"),
+            ("Torticollis (Vẹo cổ)", "🔄", "Kéo giãn cơ ức đòn chũm & vận động"),
+            ("Vẹo cột sống (Scoliosis)", "🦴", "Phương pháp Schroth & cân bằng cột sống"),
+            ("Post-Op Knee / Hip (Mổ)", "🦿", "Tập vận động sau mổ khớp gối/hông"),
+            ("Fracture (Gãy xương)", "🦾", "Phục hồi tầm vận động sau gãy xương")
+        ]
+
+        cols_e = st.columns(3)
+        for idx, item in enumerate(rehab_items):
+            title, icon, desc = item
+            col_target = cols_e[idx % 3]
+            with col_target:
+                with st.container(border=True):
+                    st.markdown(f"<h3 style='text-align: center; margin: 0;'>{icon}</h3>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='text-align: center; font-weight: bold; margin: 5px 0;'>{title}</p>", unsafe_allow_html=True)
+                    st.caption(desc)
+                    if st.button("🏋️‍♂️ Xem bài tập", use_container_width=True, key=f"open_rehab_{idx}"):
+                        st.session_state.rehab_detail_page = title
+                        st.rerun()
+
+        st.markdown("---")
+        st.caption("💡 Hệ thống dữ liệu bài tập PHCN được chuẩn hóa theo y học chứng cứ phục hồi chức năng vận động.")
+
+    else:
+        group_name = st.session_state.rehab_detail_page
+
+        if st.button("⬅️ Quay lại danh mục nhóm bệnh lý", type="secondary", key="back_to_rehab_grid"):
+            st.session_state.rehab_detail_page = None
+            st.rerun()
+
+        st.markdown("---")
+        st.subheader(f"📂 KHO 7 BÀI TẬP: {group_name.upper()}")
+        st.caption("Hệ thống bài tập chuẩn hóa lâm sàng chuyên sâu.")
+
         exercises_db = {
             "Stroke (Đột quỵ)": [
                 ("1. Tập vận động thụ động khớp vai bên liệt", "Duy trì tầm vận động, ngăn ngừa cứng khớp.", "Thực hiện nhẹ nhàng, chậm rãi từng biên độ khớp.", "3 sets x 10 lần/bên"),
@@ -523,7 +521,7 @@ with tab4:
             ],
             "Autism / Motor (Tự kỷ / VĐ)": [
                 ("1. Bài tập điều hòa cảm giác tiền đình", "Cải thiện khả năng cân bằng và định vị không gian.", "Đu đưa nhẹ trên bóng tập lớn (Gymball).", "5 phút/lần"),
-                ("2. Vận động thô: Bò trườn bắt chéo chi", "Kích thích sự phối hợp vận động hai bán cầu đại liga.", "Bò trên sàn đồng bộ tay trái chân phải và ngược lại.", "2 sets x 10 mét"),
+                ("2. Vận động thô: Bò trườn bắt chéo chi", "Kích thích sự phối hợp vận động hai bán cầu đại não.", "Bò trên sàn đồng bộ tay trái chân phải và ngược lại.", "2 sets x 10 mét"),
                 ("3. Bài tập phối hợp tay mắt với bóng lớn", "Tăng khả năng tập trung và phản xạ vận động.", "Lăn hoặc ném bắt bóng qua lại ở khoảng cách gần.", "3 sets x 10 lần"),
                 ("4. Nhảy lò cò vượt chướng ngại vật thấp", "Phát triển sức mạnh cơ chi dưới và thăng bằng động.", "Bước qua các vạch kẻ sẵn trên sàn theo nhịp đếm.", "2 sets x 5 nhịp"),
                 ("5. Bài tập giữ thăng bằng trên ván nhún", "Kiểm soát trương lực tư thế tĩnh và động.", "Đứng vững trên bề mặt không ổn định trong 30 giây.", "3 lần"),
@@ -541,9 +539,9 @@ with tab4:
             ],
             "Vẹo cột sống (Scoliosis)": [
                 ("1. Đánh giá góc Cobb & Kiểm tra nghiệm pháp Adams", "Lượng giá mức độ gù vẹo và xoay đốt sống.", "Cúi gập người phía trước kiểm tra bướu sườn.", "Thực hiện định kỳ"),
-                ("2. Kỹ thuật thở ba chiều (Schroth breathing method)", "Mở rộng lồng ngực ở phíamỏm lõm của đường cong.", "Hít sâu đưa hơi thở vào vùng lồng ngực bị lõm.", "3 sets x 10 nhịp thở"),
+                ("2. Kỹ thuật thở ba chiều (Schroth breathing method)", "Mở rộng lồng ngực ở phía mỏm lõm của đường cong.", "Hít sâu đưa hơi thở vào vùng lồng ngực bị lõm.", "3 sets x 10 nhịp thở"),
                 ("3. Kéo giãn cơ bên lõm / Tăng cường cơ bên lồi", "Lấy lại cân bằng lực cơ hai bên cột sống.", "Nghiêng lườn sang bên lõm kết hợp kéo tay tương ứng.", "3 sets x 10 lần"),
-                ("4. Bài tập ổn định cơ lõi (Core stabilization)", "Tăng cường sức mạnh hệ cơ bám cột sống.", "Tư thế tấm ván (Plank) hoặc cầu nối tiểu chuẩn.", "3 sets x 30 giây"),
+                ("4. Bài tập ổn định cơ lõi (Core stabilization)", "Tăng cường sức mạnh hệ cơ bám cột sống.", "Tư thế tấm ván (Plank) hoặc cầu nối tiêu chuẩn.", "3 sets x 30 giây"),
                 ("5. Bài tập điều chỉnh tư thế đứng và ngồi đối xứng", "Tạo nếp ý thức giữ thẳng cột sống qua gương.", "Kiểm soát vai và chậu hai bên cân bằng trước gương lớn.", "5 phút x 2 lần"),
                 ("6. Kéo giãn cột sống nhẹ nhàng tư thế nằm / treo xà", "Giảm áp lực đĩa đệm và giãn cơ cạnh sống.", "Treo xà đơn thả lỏng hoặc nằm ngửa kéo giãn tự nhiên.", "3 sets x 20 giây"),
                 ("7. Hướng dẫn bài tập tự tập duy trì tại nhà", "Phòng ngừa tiến triển góc vẹo cột sống.", "Thực hiện chuỗi bài tập Schroth rút gọn hàng ngày.", "Duy trì đều đặn")
@@ -555,7 +553,7 @@ with tab4:
                 ("4. Tập duỗi gối thụ động hết biên độ", "Ngăn ngừa co rút bao khớp gối.", "Kê gót chân lên cao, để trọng lực ép gối thẳng tự nhiên.", "3 phút x 2 lần"),
                 ("5. Bài tập đứng dồn trọng lượng hai chân đều", "Tập làm quen lại với lực ép khớp sau phẫu thuật.", "Đứng bám song vị trí an toàn, dồn lực 50-50.", "2 phút"),
                 ("6. Tập đi với dụng cụ hỗ trợ (Nạng / Khung tập đi)", "Phục hồi dáng đi chuẩn trong giai đoạn đầu.", "Tuân thủ mức độ chịu lực (Partial/Full weight bearing).", "Theo phác đồ"),
-                ("7. Tập đi cầu thang bước từng bậc", "Tái hòa nhập vận động sinh hoạt phức tạp.", "Lên bằng chân lành, xuống bằng chân mổ (Up with the good, down with the bad).", "10-15 bậc")
+                ("7. Tập đi cầu thang bước từng bậc", "Tái hòa nhập vận động sinh hoạt phức tạp.", "Lên bằng chân lành, xuống bằng chân mổ.", "10-15 bậc")
             ],
             "Fracture (Gãy xương)": [
                 ("1. Vận động chủ động các khớp lân cận ổ gãy", "Duy trì tầm vận động, chống cứng khớp và phù nề.", "Cử động nhẹ nhàng ngón chân/cổ chân khi gãy cẳng chân.", "3 sets x 10 lần"),
@@ -568,7 +566,6 @@ with tab4:
             ]
         }
 
-        # Lấy danh sách 7 bài tập tương ứng với nhóm đã chọn
         current_exercises = exercises_db.get(group_name, [])
 
         for idx_ex, ex_item in enumerate(current_exercises):
@@ -580,12 +577,6 @@ with tab4:
                 st.markdown("- **🛡️ Lưu ý an toàn:** Thực hiện đúng biên độ, dừng lại ngay khi xuất hiện cơn đau nhói hoặc chóng mặt.")
 
         st.markdown("---")
-        if st.button("🔄 Chọn nhóm bệnh lý khác", key="reset_rehab_group"):
-            st.session_state.selected_rehab_group = None
+        if st.button("⬅️ Quay lại danh mục nhóm bệnh lý", type="primary", key="bottom_back_rehab_btn"):
+            st.session_state.rehab_detail_page = None
             st.rerun()
-
-    else:
-        st.info("👆 Vui lòng bấm chọn một nhóm bệnh lý / chuyên khoa ở phía trên để hiển thị chi tiết 7 bài tập chuẩn hóa.")
-
-    st.markdown("---")
-    st.caption("💡 Hệ thống dữ liệu bài tập PHCN được chuẩn hóa chuyên sâu theo y học chứng cứ phục hồi chức năng vận động và chỉnh hình.")
