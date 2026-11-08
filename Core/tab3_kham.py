@@ -1,10 +1,9 @@
 # =========================================================
-# TAB 3: QUY TRÌNH KHÁM LÂM SÀNG & TỜ GIẤY TRẮNG (TỐC ĐỘ CAO)
+# TAB 3: QUY TRÌNH KHÁM LÂM SÀNG & TỜ GIẤY TRẮNG
 # =========================================================
 import streamlit as st
 
 def render_tab3():
-    # CSS TỐI ƯU HIỂN THỊ LƯỚI & ĐỘ MƯỢT
     st.markdown("""
         <style>
         [data-testid="stHorizontalBlock"] {
@@ -43,7 +42,6 @@ def render_tab3():
     if "exam_active_region" not in st.session_state:
         st.session_state.exam_active_region = None
 
-    # TRẠNG THÁI 1: LƯỚI ICON CHỌN VÙNG NHANH
     if st.session_state.exam_active_region is None:
         st.markdown("### 🩺 Chọn Vùng Khám Lâm Sàng")
         
@@ -69,8 +67,6 @@ def render_tab3():
                 if st.button("Chọn", key=f"fast_reg_{reg['id']}", use_container_width=True):
                     st.session_state.exam_active_region = reg['name']
                     st.rerun()
-
-    # TRẠNG THÁI 2: MÀN HÌNH CUỘN NHẬP LIỆU
     else:
         c1, c2 = st.columns([4, 1])
         with c1:
@@ -83,7 +79,6 @@ def render_tab3():
         st.markdown("---")
 
         left_col, right_col = st.columns([3, 2])
-        
         with left_col:
             with st.expander("1️⃣ Hành chính & Triệu chứng", expanded=True):
                 cur_p = st.session_state.get("current_patient", {})
@@ -93,36 +88,14 @@ def render_tab3():
                 nrs = st.slider("NRS (Đau)", 0, 10, 2, key="rt_nrs")
 
             with st.expander("2️⃣ Test & Tầm vận động", expanded=True):
-                reg_name = st.session_state.exam_active_region
                 test_val = st.radio("Nghiệm pháp chính", ["Âm tính (-)", "Dương tính (+)"], key="rt_test")
                 rom_val = st.text_input("ROM (Tầm vận động)", key="rt_rom")
-
-            if st.button("💾 Lưu Lịch Sử Khám", type="primary", use_container_width=True):
-                visit_data = {
-                    "patient_name": p_name,
-                    "patient_phone": p_phone,
-                    "region": reg_name,
-                    "symptoms": symptoms,
-                    "nrs": nrs,
-                    "test": test_val,
-                    "rom": rom_val
-                }
-                if "history_mgr" in st.session_state and p_phone:
-                    st.session_state.history_mgr.save_visit(p_phone, visit_data)
-                    st.success("✅ Đã lưu thành công!")
 
         with right_col:
             st.markdown("#### 📄 Tờ Giấy Trắng")
             summary_text = f"""[BỆNH ÁN PHCN]
 - Vùng: {st.session_state.get('exam_active_region', '---')}
 - Bệnh nhân: {st.session_state.get('rt_p_name', '---')} ({st.session_state.get('rt_p_phone', '---')})
-- Đau NRS: {st.session_state.get('rt_nrs', 0)}/10
-- Triệu chứng: {st.session_state.get('rt_symptoms', '---')}
-- Test: {st.session_state.get('rt_test', '---')}
-- ROM: {st.session_state.get('rt_rom', '---')}"""
-
+- Đau NRS: {st.session_state.get('rt_nrs', 0)}/10"""
             with st.container(border=True):
                 st.text_area("Bôi đen & Copy nội dung:", value=summary_text, height=220, key="quick_copy_box")
-            
-            if st.button("🤖 Gợi ý Phác đồ AI", use_container_width=True):
-                st.info("💡 Hướng xử lý: Tập vận động nhẹ nhàng, vật lý trị liệu giảm đau và theo dõi sát sao.")
