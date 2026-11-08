@@ -1,92 +1,96 @@
+# =========================================================
+# TAB 2: CẨM NANG TRI THỨC Y HỌC CHỨNG CỨ (TỐC ĐỘ CAO)
+# =========================================================
 import streamlit as st
 
-def render():
-    if "kb_detail_page" not in st.session_state:
-        st.session_state.kb_detail_page = None
+def render_tab2():
+    st.markdown("""
+        <style>
+        [data-testid="stHorizontalBlock"] {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+        }
+        @media (min-width: 768px) {
+            [data-testid="stHorizontalBlock"] {
+                grid-template-columns: repeat(4, 1fr) !important;
+            }
+        }
+        .grid-card-box {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 14px 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #eaeaea;
+        }
+        .icon-circle-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin: 0 auto 8px auto;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-    if st.session_state.kb_detail_page is None:
-        st.subheader("📖 Cẩm nang Tri thức & Phác đồ Lâm sàng")
-        st.markdown("Chọn một chuyên khoa bên dưới để xem tài liệu chi tiết:")
+    if "knowledge_active_cat" not in st.session_state:
+        st.session_state.knowledge_active_cat = None
 
-        search_knowledge_kw = st.text_input("🔍 Tìm kiếm nhanh bệnh lý, triệu chứng...", placeholder="Nhập từ khóa...", key="search_knowledge_input")
-
-        st.markdown("---")
-        st.markdown("##### 🗂️ Danh mục chuyên khoa & Vùng cơ thể")
-
-        knowledge_items = [
-            ("Cột sống cổ", "🦴", "C1-C7 và hội chứng chèn ép"),
-            ("Cột sống thắt lưng", "🩻", "Thoát vị đĩa đệm, đau thần kinh tọa"),
-            ("Khớp vai", "🦾", "Chóp xoay & đông cứng khớp vai"),
-            ("Khuỷu tay", "💪", "Viêm lồi cầu, hội chứng ống khuỷu"),
-            ("Cổ tay – bàn tay", "✋", "Hội chứng ống cổ tay, De Quervain"),
-            ("Khớp háng", "🦿", "Thoái hóa & kẹp háng FAI"),
-            ("Khớp gối", "🦵", "ACL, sụn chêm & thoái hóa gối"),
-            ("Cổ chân – bàn chân", "🦶", "Bong gân & viêm cân gan chân"),
-            ("Thần kinh & Khác", "🧠", "Đột quỵ, phục hồi chức năng thần kinh")
+    # TRẠNG THÁI 1: LƯỚI ICON CHỌN CHUYÊN KHOA
+    if st.session_state.knowledge_active_cat is None:
+        st.markdown("### 📚 Cẩm Nang Tri Thức Y Chứng")
+        
+        categories = [
+            {"id": "stroke", "name": "Đột quỵ não", "icon": "🧠", "color": "linear-gradient(135deg, #48dbfb, #0abde3)"},
+            {"id": "spine", "name": "Cột sống", "icon": "🦴", "color": "linear-gradient(135deg, #ff6b6b, #ee5253)"},
+            {"id": "joint", "name": "Khớp ngoại biên", "icon": "🦾", "color": "linear-gradient(135deg, #10ac84, #1dd1a1)"},
+            {"id": "pediatric", "name": "PHCN Nhi khoa", "icon": "👶", "color": "linear-gradient(135deg, #f39c12, #e67e22)"}
         ]
 
-        cols = st.columns(3)
-        for idx, item in enumerate(knowledge_items):
-            title, icon, desc = item
-            col_target = cols[idx % 3]
-            with col_target:
-                with st.container(border=True):
-                    st.markdown(f"<h3 style='text-align: center; margin: 0;'>{icon}</h3>", unsafe_allow_html=True)
-                    st.markdown(f"<p style='text-align: center; font-weight: bold; margin: 5px 0;'>{title}</p>", unsafe_allow_html=True)
-                    st.caption(desc)
-                    if st.button("📖 Đọc sách", use_container_width=True, key=f"open_kb_{idx}"):
-                        st.session_state.kb_detail_page = title
-                        st.rerun()
+        cols = st.columns(len(categories))
+        for idx, cat in enumerate(categories):
+            with cols[idx]:
+                st.markdown(f"""
+                    <div class="grid-card-box">
+                        <div class="icon-circle-btn" style="background: {cat['color']};">
+                            {cat['icon']}
+                        </div>
+                        <div style="font-weight: 700; font-size: 13px; color: #1f2937;">{cat['name']}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button("Xem", key=f"fast_cat_{cat['id']}", use_container_width=True):
+                    st.session_state.knowledge_active_cat = cat['name']
+                    st.rerun()
+
+    # TRẠNG THÁI 2: MÀN HÌNH CUỘN ĐỌC TÀI LIỆU
     else:
-        current_region = st.session_state.kb_detail_page
-
-        if st.button("⬅️ Quay lại danh mục", type="secondary", key="back_to_grid_kb"):
-            st.session_state.kb_detail_page = None
-            st.rerun()
-
-        st.markdown("---")
-        st.subheader(f"📚 SÁCH CHUYÊN KHOA: {current_region.upper()}")
-        st.caption("Tài liệu huấn luyện và tra cứu nhanh lâm sàng Phục hồi chức năng vận động.")
-
-        knowledge_textbook_db = {
-            "Cột sống cổ": (
-                "1. Giải phẫu & Sinh cơ học cột sống cổ",
-                "Cột sống cổ gồm 7 đốt sống (C1-C7), chịu trách nhiệm nâng đỡ đầu và biên độ vận động lớn.",
-                "Hội chứng cổ - vai - gáy, thoái hóa đốt sống cổ, thoát vị đĩa đệm cổ.",
-                "Đau lan dọc xuống tay, tê bì ngón tay, hạn chế tầm vận động xoay cổ.",
-                "Nghiệm pháp Spurling (nén ép cổ), Test kéo giãn cổ, Test Lhermitte.",
-                "Giảm đau bằng vật lý trị liệu, kéo giãn cột sống cổ, tập mạnh nhóm cơ cổ sâu."
-            ),
-            # Các vùng khác tương tự...
-        }
-
-        content = knowledge_textbook_db.get(current_region, (
-            "1. Tổng quan chuyên khảo",
-            "Nội dung đang được cập nhật theo phác đồ chuẩn y khoa.",
-            "Các hội chứng thường gặp và tổn thương cấu trúc liên quan.",
-            "Triệu chứng lâm sàng điển hình và biểu hiện cơ năng, thực thể.",
-            "Hệ thống nghiệm pháp, test đặc hiệu khám lâm sàng chuyên sâu.",
-            "Phác đồ điều trị vật lý trị liệu và phục hồi chức năng vận động toàn diện."
-        ))
-
-        sec_title, intro, pathology, symptoms, tests, treatment = content
-
-        st.markdown(f"#### 📖 {sec_title}")
-        st.info(intro)
-
-        with st.expander("📌 2. Các hội chứng & Bệnh lý thường gặp", expanded=True):
-            st.markdown(pathology)
-
-        with st.expander("🩺 3. Triệu chứng lâm sàng & Biểu hiện", expanded=True):
-            st.markdown(symptoms)
-
-        with st.expander("🔍 4. Hệ thống Test đặc hiệu & Nghiệm pháp", expanded=True):
-            st.markdown(tests)
-
-        with st.expander("⚙️ 5. Phác đồ Vật lý trị liệu & PHCN", expanded=True):
-            st.markdown(treatment)
+        c1, c2 = st.columns([4, 1])
+        with c1:
+            st.markdown(f"#### 📖 Chủ đề: `{st.session_state.knowledge_active_cat}`")
+        with c2:
+            if st.button("⬅ Quay lại", use_container_width=True):
+                st.session_state.knowledge_active_cat = None
+                st.rerun()
 
         st.markdown("---")
-        if st.button("⬅️ Quay lại danh mục chuyên khoa", type="primary", key="bottom_back_btn"):
-            st.session_state.kb_detail_page = None
-            st.rerun()
+        
+        # Danh sách bài viết cuộn dọc
+        with st.container(border=True):
+            st.markdown("##### 📄 Hướng dẫn chẩn đoán và lượng giá lâm sàng")
+            st.caption("Cập nhật theo chuẩn y học chứng cứ quốc tế.")
+            st.markdown("""
+            - **1. Đánh giá ban đầu:** Khảo sát mức độ độc lập, tầm vận động và trương lực cơ.
+            - **2. Can thiệp cốt lõi:** Áp dụng bài tập vận động trị liệu đúng ngưỡng sinh lý.
+            - **3. Theo dõi tiến triển:** Đánh giá lại sau mỗi đợt điều trị (2 tuần/lần).
+            """)
+        
+        with st.container(border=True):
+            st.markdown("##### 📄 Phác đồ điều trị phục hồi chuyên sâu")
+            st.markdown("Tài liệu tham khảo dành riêng cho bác sĩ và kỹ thuật viên vật lý trị liệu.")
