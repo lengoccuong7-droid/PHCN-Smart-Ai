@@ -1,5 +1,5 @@
 # =========================================================
-# TAB 2: CẨM NANG TRI THỨC Y HỌC CHỨNG CỨ (TỐC ĐỘ CAO)
+# TAB 2: CẨM NANG TRI THỨC Y HỌC CHỨNG CỨ (HOÀN THIỆN)
 # =========================================================
 import streamlit as st
 
@@ -45,10 +45,11 @@ def render_tab2():
     # TRẠNG THÁI 1: LƯỚI ICON CHỌN CHUYÊN KHOA
     if st.session_state.knowledge_active_cat is None:
         st.markdown("### 📚 Cẩm Nang Tri Thức Y Chứng")
+        st.caption("Chọn chuyên khoa để tra cứu phác đồ và tài liệu lâm sàng:")
         
         categories = [
-            {"id": "stroke", "name": "Đột quỵ não", "icon": "🧠", "color": "linear-gradient(135deg, #48dbfb, #0abde3)"},
-            {"id": "spine", "name": "Cột sống", "icon": "🦴", "color": "linear-gradient(135deg, #ff6b6b, #ee5253)"},
+            {"id": "stroke", "name": "Đột quỵ & Thần kinh", "icon": "🧠", "color": "linear-gradient(135deg, #48dbfb, #0abde3)"},
+            {"id": "spine", "name": "Cột sống & Cơ xương", "icon": "🦴", "color": "linear-gradient(135deg, #ff6b6b, #ee5253)"},
             {"id": "joint", "name": "Khớp ngoại biên", "icon": "🦾", "color": "linear-gradient(135deg, #10ac84, #1dd1a1)"},
             {"id": "pediatric", "name": "PHCN Nhi khoa", "icon": "👶", "color": "linear-gradient(135deg, #f39c12, #e67e22)"}
         ]
@@ -69,11 +70,11 @@ def render_tab2():
                     st.session_state.knowledge_active_cat = cat['name']
                     st.rerun()
 
-    # TRẠNG THÁI 2: MÀN HÌNH CUỘN ĐỌC TÀI LIỆU
+    # TRẠNG THÁI 2: MÀN HÌNH CUỘN ĐỌC TÀI LIỆU CHUYÊN SÂU
     else:
         c1, c2 = st.columns([4, 1])
         with c1:
-            st.markdown(f"#### 📖 Chủ đề: `{st.session_state.knowledge_active_cat}`")
+            st.markdown(f"#### 📖 Chuyên khoa: `{st.session_state.knowledge_active_cat}`")
         with c2:
             if st.button("⬅ Quay lại", use_container_width=True):
                 st.session_state.knowledge_active_cat = None
@@ -81,16 +82,17 @@ def render_tab2():
 
         st.markdown("---")
         
-        # Danh sách bài viết cuộn dọc
         with st.container(border=True):
-            st.markdown("##### 📄 Hướng dẫn chẩn đoán và lượng giá lâm sàng")
-            st.caption("Cập nhật theo chuẩn y học chứng cứ quốc tế.")
+            st.markdown("##### 📄 Nguyên tắc Vận động Trị liệu Y học Chứng cứ")
             st.markdown("""
-            - **1. Đánh giá ban đầu:** Khảo sát mức độ độc lập, tầm vận động và trương lực cơ.
-            - **2. Can thiệp cốt lõi:** Áp dụng bài tập vận động trị liệu đúng ngưỡng sinh lý.
-            - **3. Theo dõi tiến triển:** Đánh giá lại sau mỗi đợt điều trị (2 tuần/lần).
+            * **Mục tiêu:** Phòng ngừa co rút biến dạng, gia tăng khả năng độc lập sinh hoạt tối đa cho người bệnh.
+            * **Nguyên tắc cốt lõi:** Bắt đầu càng sớm càng tốt khi tình trạng toàn thân ổn định; loại bỏ mẫu vận động bất thường bằng kỹ thuật tạo thuận thần kinh cơ.
+            * **Đánh giá lại:** Lượng giá biên độ vận động và sức cơ định kỳ mỗi 2 tuần để điều chỉnh cường độ tập luyện.
             """)
         
         with st.container(border=True):
-            st.markdown("##### 📄 Phác đồ điều trị phục hồi chuyên sâu")
-            st.markdown("Tài liệu tham khảo dành riêng cho bác sĩ và kỹ thuật viên vật lý trị liệu.")
+            st.markdown("##### 📄 Hướng dẫn Đánh giá & Lượng giá Lâm sàng")
+            st.markdown("""
+            * Sử dụng thang điểm đau NRS, tầm vận động ROM và các test đặc hiệu chuyên khoa.
+            * Kết hợp ghi nhận chi tiết trên **Tờ giấy trắng** để xuất bệnh án nhanh chóng.
+            """)
